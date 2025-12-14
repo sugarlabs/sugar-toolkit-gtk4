@@ -166,14 +166,23 @@ make ci-test          # Runs the full CI pipeline simulation
 # Dev Tips
 
 - Run the examples with:
-
+ 
 ```
  GTK_DEBUG=interactive QT_QPA_PLATFORM=xcb GDK_BACKEND=x11 \
 SUGAR_BUNDLE_PATH="$(pwd)/examples" \
 SUGAR_BUNDLE_ID="org.sugarlabs.SugarTextEditor" \
 SUGAR_BUNDLE_NAME="Sugar Text Editor" \
 SUGAR_ACTIVITY_ROOT="/tmp/sugar_text_editor" \
-python examples/activity_examples.py
+python examples/activity_example.py
+```
+- For Mac OS
+```
+GTK_DEBUG=interactive \
+SUGAR_BUNDLE_PATH="$(pwd)/examples" \
+SUGAR_BUNDLE_ID="org.sugarlabs.BasicExample" \
+SUGAR_BUNDLE_NAME="Basic Example" \
+SUGAR_ACTIVITY_ROOT="/tmp/sugar_basic_example" \
+python3 examples/activity_example.py
 ```
 
 ## Requirements
