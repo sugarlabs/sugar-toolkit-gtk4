@@ -701,13 +701,15 @@ class TrayIcon(Gtk.Button):
 
 
 def _apply_tray_css():
-    """Apply CSS styling for tray widgets."""
-    css = """
-    .drag-active {
-        background-color: rgba(0, 0, 0, 0.2);
-    }
+    """Apply CSS styling for tray widgets.
+    
+    CSS styling is defined in sugar-gtk4.css (.drag-active class and 
+    htray/vtray element styles) or sugar-artwork themes to avoid duplication.
+    This function is kept for backward compatibility.
     """
-    style.apply_css_to_widget(None, css)  # Apply globally
+    # CSS is now managed by the centralized theme loader
+    # See: sugar4.graphics.theme.SugarThemeLoader
+    pass
 
 
 try:

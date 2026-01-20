@@ -20,6 +20,15 @@ except ImportError:
     # gi might not be available during docs build
     pass
 
+# Initialize Sugar theme system
+# This loads CSS from sugar-artwork if available, or uses bundled fallback
+try:
+    from .theme import init_sugar_themes
+    init_sugar_themes()
+except Exception:
+    # Continue even if theme initialization fails
+    pass
+
 from .xocolor import XoColor
 from .icon import (
     Icon,

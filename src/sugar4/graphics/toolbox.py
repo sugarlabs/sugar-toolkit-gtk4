@@ -76,31 +76,12 @@ class Toolbox(Gtk.Box):
         self._notebook.connect("notify::page", self._notify_page_cb)
 
     def _apply_toolbox_styling(self):
-        """Apply Sugar-style toolbox styling."""
-        css = f"""
-        notebook.toolbox {{
-            background: {style.COLOR_TOOLBAR_GREY.get_css_rgba()};
-        }}
-        notebook.toolbox > header {{
-            background: {style.COLOR_TOOLBAR_GREY.get_css_rgba()};
-            padding: {style.TOOLBOX_TAB_VBORDER}px {style.TOOLBOX_TAB_HBORDER}px;
-        }}
-        notebook.toolbox > header > tabs > tab {{
-            background: transparent;
-            border: none;
-            padding: {style.TOOLBOX_TAB_VBORDER}px {style.TOOLBOX_TAB_HBORDER}px;
-            min-width: {style.TOOLBOX_TAB_LABEL_WIDTH}px;
-        }}
-        notebook.toolbox > header > tabs > tab:checked {{
-            background: alpha(@theme_selected_bg_color, 0.1);
-        }}
-        separator.toolbox-separator {{
-            background: {style.COLOR_PANEL_GREY.get_css_rgba()};
-            min-height: {style.TOOLBOX_SEPARATOR_HEIGHT}px;
-        }}
+        """Apply Sugar-style toolbox styling using centralized CSS classes.
+        
+        CSS classes (defined in sugar-gtk4.css or sugar-artwork themes):
+        - toolbox: Applied to the notebook widget
+        - toolbox-separator: Applied to the separator widget
         """
-        style.apply_css_to_widget(self, css)
-
         self._notebook.add_css_class("toolbox")
         self._separator.add_css_class("toolbox-separator")
 

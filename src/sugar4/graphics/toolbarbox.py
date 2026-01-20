@@ -247,22 +247,10 @@ class ToolbarBox(Gtk.Box):
         self._apply_styling()
 
     def _apply_styling(self):
+        # Apply Sugar-toolkit CSS classes that are defined in sugar-gtk4.css
+        # or sugar-artwork themes. The CSS is loaded centrally by the theme
+        # loader to avoid duplication and maintain consistency with sugar-artwork.
         self.add_css_class("sugar-toolbarbox")
-
-        css = f"""
-        .sugar-toolbarbox {{
-            background: {style.COLOR_TOOLBAR_GREY.get_css_rgba()};
-        }}
-        .toolbar-expandable-button {{
-            margin: 2px;
-            border-radius: 4px;
-        }}
-        .toolbar-expandable-button.expanded {{
-            background: alpha(@theme_selected_bg_color, 0.2);
-            border-bottom: 2px solid @theme_selected_bg_color;
-        }}
-        """
-        style.apply_css_to_widget(self, css)
 
     def get_toolbar(self):
         return self._toolbar
@@ -477,6 +465,9 @@ def _setup_page(page_widget, color, hpad):
 
     page = _get_embedded_page(page_widget)
     if page:
+        # Apply background color to page dynamically
+        # Note: This uses a dynamic color, so we keep this CSS generation
+        # but could be improved by supporting theme variables
         css = f"""
         * {{
             background: {color.get_css_rgba()};

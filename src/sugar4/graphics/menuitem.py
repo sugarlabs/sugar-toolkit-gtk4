@@ -113,22 +113,12 @@ class MenuItem(Gtk.Button):
         self.connect("unmap", self._on_unmapped)
 
     def _apply_menu_item_styling(self):
-        """Apply CSS styling to make button look like a menu item."""
-        css = """
-        button.menuitem {
-            background: transparent;
-            border: none;
-            border-radius: 4px;
-            padding: 4px 6px;
-        }
-        button.menuitem:hover {
-            background: alpha(@theme_selected_bg_color, 0.1);
-        }
-        button.menuitem:active {
-            background: alpha(@theme_selected_bg_color, 0.2);
-        }
+        """Apply CSS styling for menu items using centralized theme.
+        
+        CSS is defined in sugar-gtk4.css (.menuitem class) or sugar-artwork
+        themes to avoid duplication and maintain Sugar design consistency.
         """
-        style.apply_css_to_widget(self, css)
+        # CSS styling is managed by the centralized theme loader
 
     def _on_mapped(self, widget):
         """Handle widget being mapped (shown)."""
@@ -256,12 +246,9 @@ class MenuSeparator(Gtk.Separator):
         self._apply_separator_styling()
 
     def _apply_separator_styling(self):
-        """Apply styling for menu separator."""
-        css = """
-        separator.menu-separator {
-            margin: 2px 6px;
-            min-height: 1px;
-            background: alpha(@theme_fg_color, 0.2);
-        }
+        """Apply styling for menu separator using centralized theme.
+        
+        CSS is defined in sugar-gtk4.css (.menu-separator class) or 
+        sugar-artwork themes to avoid duplication.
         """
-        style.apply_css_to_widget(self, css)
+        # CSS styling is managed by the centralized theme loader

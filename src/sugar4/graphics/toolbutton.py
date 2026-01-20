@@ -162,37 +162,13 @@ class ToolButton(Gtk.Button):
         self._apply_toolbar_button_css()
 
     def _apply_toolbar_button_css(self):
-        css = """
-        .toolbar-button {
-            border-radius: 6px;
-            margin: 2px;
-            padding: 6px;
-            min-width: 32px;
-            min-height: 32px;
-        }
-
-        .toolbar-button:hover {
-            background: alpha(@theme_fg_color, 0.1);
-        }
-
-        .toolbar-button:active,
-        .toolbar-button.active {
-            background: alpha(@theme_fg_color, 0.2);
-            border: 1px solid alpha(@theme_fg_color, 0.3);
-        }
-
-        .toolbar-button:focus {
-            outline: 2px solid @theme_selected_bg_color;
-            outline-offset: 2px;
-        }
+        """Apply toolbar button CSS class.
+        
+        CSS styling is defined in sugar-gtk4.css (.toolbar-button class)
+        or sugar-artwork themes, rather than hardcoded here to avoid
+        duplication and maintain consistency with Sugar design.
         """
-
-        try:
-            css_provider = Gtk.CssProvider()
-            css_provider.load_from_string(css)
-            self.get_style_context().add_provider(css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-        except Exception as e:
-            logging.warning(f"Could not apply toolbar button CSS: {e}")
+        # CSS classes are applied via sugar-gtk4.css (centralized theme)
 
     def __destroy_cb(self, widget):
         if self._palette_invoker is not None:
@@ -460,38 +436,15 @@ class ToolButton(Gtk.Button):
 
 
 def _apply_module_css():
-    """Apply module-level CSS styling."""
-    css = """
-    /* Additional toolbar button styles */
-    .toolbar-button icon {
-        min-width: 24px;
-        min-height: 24px;
-    }
-
-    .toolbar-button label {
-        font-size: 0.9em;
-    }
-
-    /* Ensure proper spacing in horizontal toolbars */
-    toolbar .toolbar-button {
-        margin: 1px;
-    }
-
-    /* Active palette indicator */
-    .toolbar-button.active {
-        box-shadow: inset 0 0 0 2px @theme_selected_bg_color;
-    }
+    """Apply module-level CSS styling for toolbar buttons.
+    
+    CSS styling is centralized in sugar-gtk4.css to avoid duplication
+    and maintain consistency with sugar-artwork themes. This function
+    is kept for backward compatibility but delegates to the theme loader.
     """
-
-    try:
-        css_provider = Gtk.CssProvider()
-        css_provider.load_from_string(css)
-
-        display = Gdk.Display.get_default()
-        if display:
-            Gtk.StyleContext.add_provider_for_display(display, css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-    except Exception as e:
-        logging.warning(f"Could not apply module CSS: {e}")
+    # CSS is now managed by the centralized theme loader
+    # See: sugar4.graphics.theme.SugarThemeLoader
+    pass
 
 
 try:

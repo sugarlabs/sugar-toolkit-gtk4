@@ -1,0 +1,267 @@
+/*
+ * Sugar Toolkit GTK4 Theme CSS
+ * 
+ * This file contains all Sugar-specific CSS styling for GTK4 widgets.
+ * It centralizes styling that should be consistent with sugar-artwork.
+ * 
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ */
+
+/* ============================================================================
+ * Toolbar and ToolbarBox Styling
+ * ============================================================================ */
+
+/* Main toolbar box container */
+.sugar-toolbarbox {
+    background: #282828;
+    padding: 0;
+    margin: 0;
+}
+
+/* Expandable toolbar buttons */
+.toolbar-expandable-button {
+    margin: 2px;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.toolbar-expandable-button:hover {
+    background: alpha(@theme_fg_color, 0.1);
+}
+
+.toolbar-expandable-button:active {
+    background: alpha(@theme_fg_color, 0.2);
+}
+
+.toolbar-expandable-button.expanded {
+    background: alpha(@theme_selected_bg_color, 0.2);
+    border-bottom: 2px solid @theme_selected_bg_color;
+}
+
+/* Regular toolbar buttons */
+.toolbar-button {
+    border-radius: 6px;
+    margin: 2px;
+    padding: 6px;
+    min-width: 32px;
+    min-height: 32px;
+}
+
+.toolbar-button:hover {
+    background: alpha(@theme_fg_color, 0.1);
+}
+
+.toolbar-button:active,
+.toolbar-button.active {
+    background: alpha(@theme_fg_color, 0.2);
+    border: 1px solid alpha(@theme_fg_color, 0.3);
+}
+
+.toolbar-button:focus {
+    outline: 2px solid @theme_selected_bg_color;
+    outline-offset: 2px;
+}
+
+.toolbar-button icon {
+    min-width: 24px;
+    min-height: 24px;
+}
+
+.toolbar-button label {
+    font-size: 0.9em;
+}
+
+/* Ensure proper spacing in horizontal toolbars */
+toolbar .toolbar-button {
+    margin: 1px;
+}
+
+/* Active palette indicator */
+.toolbar-button.active {
+    box-shadow: inset 0 0 0 2px @theme_selected_bg_color;
+}
+
+/* ============================================================================
+ * Toolbox Styling (Tabbed Interface)
+ * ============================================================================ */
+
+notebook.toolbox {
+    background: #282828;
+}
+
+notebook.toolbox > header {
+    background: #282828;
+    padding: 4px 2px;
+}
+
+notebook.toolbox > header > tabs > tab {
+    background: transparent;
+    border: none;
+    padding: 4px 2px;
+    min-width: 150px;
+}
+
+notebook.toolbox > header > tabs > tab:checked {
+    background: alpha(@theme_selected_bg_color, 0.1);
+}
+
+separator.toolbox-separator {
+    background: #c0c0c0;
+    min-height: 1px;
+}
+
+/* ============================================================================
+ * Palette Menu Styling
+ * ============================================================================ */
+
+.palette {
+    background: #282828;
+    border: 1px solid #a6a6a6;
+}
+
+.palette-action-bar {
+    background: #282828;
+    padding: 6px;
+}
+
+.palette-action-bar button {
+    margin: 2px;
+}
+
+.palette-menu-item {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 0;
+}
+
+.palette-menu-item:hover {
+    background: alpha(@theme_selected_bg_color, 0.1);
+}
+
+.palette-menu-item:active {
+    background: alpha(@theme_selected_bg_color, 0.2);
+}
+
+.palette-menu-item:disabled {
+    opacity: 0.5;
+}
+
+separator.palette-menu-separator {
+    margin: 2px 6px;
+    min-height: 1px;
+    background: alpha(@theme_fg_color, 0.2);
+}
+
+/* ============================================================================
+ * Menu Item Styling
+ * ============================================================================ */
+
+.menuitem {
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin: 1px;
+}
+
+.menuitem:hover {
+    background: alpha(@theme_selected_bg_color, 0.15);
+}
+
+.menuitem:active {
+    background: alpha(@theme_selected_bg_color, 0.25);
+}
+
+.menuitem label {
+    padding: 0 6px;
+}
+
+.menu-separator {
+    min-height: 1px;
+    background: #a6a6a6;
+    margin: 4px 0;
+}
+
+.force-black {
+    color: #000000;
+}
+
+/* ============================================================================
+ * Radio Toolbar Button Styling
+ * ============================================================================ */
+
+.radio-tool-button {
+    border-radius: 6px;
+    margin: 2px;
+    padding: 6px;
+    min-width: 32px;
+    min-height: 32px;
+}
+
+.radio-tool-button:hover {
+    background: alpha(@theme_fg_color, 0.1);
+}
+
+.radio-tool-button:active,
+.radio-tool-button.active {
+    background: alpha(@theme_selected_bg_color, 0.3);
+    border: 1px solid @theme_selected_bg_color;
+}
+
+.radio-tool-button:checked {
+    background: alpha(@theme_selected_bg_color, 0.3);
+    border: 1px solid @theme_selected_bg_color;
+}
+
+/* ============================================================================
+ * Alert Dialog Styling
+ * ============================================================================ */
+
+.sugar-alert {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.sugar-alert label {
+    color: #000000;
+}
+
+/* ============================================================================
+ * Tray Styling (HTray, VTray)
+ * ============================================================================ */
+
+htray {
+    background: transparent;
+}
+
+vtray {
+    background: transparent;
+}
+
+.drag-active {
+    background: alpha(@theme_selected_bg_color, 0.2);
+}
+
+/* ============================================================================
+ * Window Styling
+ * ============================================================================ */
+
+.unfullscreen-button {
+    margin: 2px;
+}
+
+/* ============================================================================
+ * General Widget Styling
+ * ============================================================================ */
+
+/* Ensure consistent spacing */
+.sugar-widget {
+    margin: 0;
+    padding: 0;
+}
+
+/* Additional toolbar styling for consistency */
+.toolbar {
+    background: #282828;
+    padding: 2px;
+}

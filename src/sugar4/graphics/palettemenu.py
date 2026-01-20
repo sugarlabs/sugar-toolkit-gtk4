@@ -183,21 +183,14 @@ class PaletteMenuItemSeparator(Gtk.Separator):
         self.set_size_request(-1, style.DEFAULT_SPACING * 2)
 
         self.add_css_class("palette-menu-separator")
-        self._apply_separator_styling()
 
     def _apply_separator_styling(self):
-        """Apply CSS styling for the separator."""
-        css = """
-        separator.palette-menu-separator {
-            margin: 2px 6px;
-            min-height: 1px;
-            background: alpha(@theme_fg_color, 0.2);
-        }
+        """Apply CSS styling for the separator using centralized theme.
+        
+        CSS is defined in sugar-gtk4.css or sugar-artwork themes to avoid
+        duplication and maintain consistency with Sugar design.
         """
-        try:
-            style.apply_css_to_widget(self, css)
-        except Exception as e:
-            logging.warning(f"Could not apply separator CSS: {e}")
+        # CSS styling is managed by the centralized theme loader
 
 
 class PaletteMenuItem(Gtk.Button):
@@ -305,28 +298,12 @@ class PaletteMenuItem(Gtk.Button):
         self.emit("item-activated")
 
     def _apply_menu_item_styling(self):
-        """Apply CSS styling to make button look like a menu item."""
-        css = """
-        button.palette-menu-item {
-            background: transparent;
-            border: none;
-            border-radius: 4px;
-            padding: 0;
-        }
-        button.palette-menu-item:hover {
-            background: alpha(@theme_selected_bg_color, 0.1);
-        }
-        button.palette-menu-item:active {
-            background: alpha(@theme_selected_bg_color, 0.2);
-        }
-        button.palette-menu-item:disabled {
-            opacity: 0.5;
-        }
+        """Apply CSS styling for palette menu items using centralized theme.
+        
+        CSS is defined in sugar-gtk4.css (.palette-menu-item class) or 
+        sugar-artwork themes to avoid duplication and maintain consistency.
         """
-        try:
-            style.apply_css_to_widget(self, css)
-        except Exception as e:
-            logging.warning(f"Could not apply menu item CSS: {e}")
+        # CSS styling is managed by the centralized theme loader
 
     def _setup_gestures(self):
         """Set up gesture controllers for hover effects."""

@@ -82,26 +82,14 @@ class RadioToolButton(ToolButton):
 
         # radio button styling
         self.add_css_class("radio-tool-button")
-        self._apply_radio_styling()
 
     def _apply_radio_styling(self):
-        css = """
-        .radio-tool-button {
-            border-radius: 4px;
-            margin: 1px;
-        }
+        """Apply radio button styling using centralized theme.
         
-        .radio-tool-button:checked,
-        .radio-tool-button.active {
-            background: alpha(@theme_selected_bg_color, 0.2);
-            border: 1px solid @theme_selected_bg_color;
-        }
-        
-        .radio-tool-button:hover:not(.active) {
-            background: alpha(@theme_fg_color, 0.05);
-        }
+        CSS is defined in sugar-gtk4.css (.radio-tool-button class) or
+        sugar-artwork themes to avoid duplication.
         """
-        style.apply_css_to_widget(self, css)
+        # CSS styling is managed by the centralized theme loader
 
     def _on_clicked(self, button):
         """Handle button click."""
