@@ -1311,7 +1311,6 @@ class WidgetInvoker(Invoker):
         if not self.parent:
             return
 
-        allocation = self.parent.get_allocation()
         context = self.parent.get_style_context()
         context.add_class("toolitem")
         context.add_class("palette-down")
