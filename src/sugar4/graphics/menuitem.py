@@ -38,7 +38,7 @@ from sugar4.graphics.icon import Icon
 from sugar4.graphics import style
 
 
-class MenuItem(Gio.MenuItem):
+class MenuItem(Gtk.Button):
     """
     A Sugar-style menu item with icon and text support.
 
@@ -65,16 +65,23 @@ class MenuItem(Gio.MenuItem):
         self._accelerator = None
         self._action_name = None
 
+        # horizontal box for content
+        content_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        content_box.set_margin_start(6)
+        content_box.set_margin_end(6)
+        content_box.set_margin_top(4)
+        content_box.set_margin_bottom(4)
+
         if icon_name is not None:
             icon = Icon(icon_name=icon_name, pixel_size=style.SMALL_ICON_SIZE)
             if xo_color is not None:
                 icon.set_xo_color(xo_color)
-            self.set_icon(icon.get_gicon())
+            content_box.append(icon)
         elif file_name is not None:
             icon = Icon(file_name=file_name, pixel_size=style.SMALL_ICON_SIZE)
             if xo_color is not None:
                 icon.set_xo_color(xo_color)
-            self.set_icon(icon.get_gicon())
+            content_box.append(icon)
 
         self._label = Gtk.Label(label=text_label)
         self._label.set_halign(Gtk.Align.START)
@@ -87,7 +94,7 @@ class MenuItem(Gio.MenuItem):
             self._label.set_ellipsize(style.ELLIPSIZE_MODE_DEFAULT)
             self._label.set_max_width_chars(text_maxlen)
 
-        self.set_label(self._label)
+        self.set_child(content_box)
 
         # Style the button to look like a menu item
         self.add_css_class("menuitem")
