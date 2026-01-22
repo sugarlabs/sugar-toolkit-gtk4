@@ -42,9 +42,6 @@ class MenuItem(Gtk.Button):
     """
     A Sugar-style menu item with icon and text support.
 
-    This replaces the deprecated ImageMenuItem with a Button
-    that can be used in menus and popover menus.
-
     Args:
         text_label (str): Text to display on the menu item
         icon_name (str): Name of icon to display
@@ -86,49 +83,25 @@ class MenuItem(Gtk.Button):
                 icon.set_xo_color(xo_color)
             content_box.append(icon)
 
-        if text_label is not None:
-            self._label = Gtk.Label(label=text_label)
-            self._label.set_halign(Gtk.Align.START)
-            self._label.set_hexpand(True)
-            # Force label text to black
-            self._label.add_css_class("force-black")
-            style.apply_css_to_widget(self._label, ".force-black { color: #000000; }")
+        self._label = Gtk.Label(label=text_label)
+        self._label.set_halign(Gtk.Align.START)
+        self._label.set_hexpand(True)
+        # Force label text to black
+        self._label.add_css_class("force-black")
+        style.apply_css_to_widget(self._label, ".force-black { color: #000000; }")
 
-            if text_maxlen > 0:
-                self._label.set_ellipsize(style.ELLIPSIZE_MODE_DEFAULT)
-                self._label.set_max_width_chars(text_maxlen)
-
-            content_box.append(self._label)
-        else:
-            self._label = None
+        if text_maxlen > 0:
+            self._label.set_ellipsize(style.ELLIPSIZE_MODE_DEFAULT)
+            self._label.set_max_width_chars(text_maxlen)
 
         self.set_child(content_box)
 
         # Style the button to look like a menu item
         self.add_css_class("menuitem")
-        self._apply_menu_item_styling()
 
         # Connect signals for accelerator handling
         self.connect("map", self._on_mapped)
         self.connect("unmap", self._on_unmapped)
-
-    def _apply_menu_item_styling(self):
-        """Apply CSS styling to make button look like a menu item."""
-        css = """
-        button.menuitem {
-            background: transparent;
-            border: none;
-            border-radius: 4px;
-            padding: 4px 6px;
-        }
-        button.menuitem:hover {
-            background: alpha(@theme_selected_bg_color, 0.1);
-        }
-        button.menuitem:active {
-            background: alpha(@theme_selected_bg_color, 0.2);
-        }
-        """
-        style.apply_css_to_widget(self, css)
 
     def _on_mapped(self, widget):
         """Handle widget being mapped (shown)."""
@@ -232,6 +205,9 @@ class MenuItem(Gtk.Button):
         if self._label:
             return self._label.get_text()
         return ""
+
+    def set_image(self, icon):
+        self.set_icon(icon.get_gicon())
 
     # Properties for compatibility
     accelerator = GObject.Property(
