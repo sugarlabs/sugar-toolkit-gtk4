@@ -674,6 +674,7 @@ class Icon(Gtk.Image):
 
         Returns:
             str, SVG color string, like '#FFFFFF'
+        '''
 
         return self._buffer.fill_color
 
