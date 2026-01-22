@@ -97,16 +97,18 @@ class _TrayViewport(Gtk.ScrolledWindow):
             logging.warning("Item not found in tray children")
             return
 
-        # Get the item's allocation
-        allocation = item.get_allocation()
+        success, bounds = item.compute_bounds(self.traybar)
+        if not success:
+            return
+
         if self.orientation == Gtk.Orientation.HORIZONTAL:
             adj = self.get_hadjustment()
-            start = allocation.x
-            stop = allocation.x + allocation.width
+            start = bounds.get_x()
+            stop = bounds.get_x() + bounds.get_width()
         else:
             adj = self.get_vadjustment()
-            start = allocation.y
-            stop = allocation.y + allocation.height
+            start = bounds.get_y()
+            stop = bounds.get_y() + bounds.get_height()
 
         # Scroll if needed
         if start < adj.get_value():
@@ -116,26 +118,28 @@ class _TrayViewport(Gtk.ScrolledWindow):
 
     def _scroll_next(self):
         """Scroll to next page."""
-        allocation = self.get_allocation()
         if self.orientation == Gtk.Orientation.HORIZONTAL:
             adj = self.get_hadjustment()
-            new_value = adj.get_value() + allocation.width
-            adj.set_value(min(new_value, adj.get_upper() - allocation.width))
+            width = self.get_width()
+            new_value = adj.get_value() + width
+            adj.set_value(min(new_value, adj.get_upper() - width))
         else:
             adj = self.get_vadjustment()
-            new_value = adj.get_value() + allocation.height
-            adj.set_value(min(new_value, adj.get_upper() - allocation.height))
+            height = self.get_height()
+            new_value = adj.get_value() + height
+            adj.set_value(min(new_value, adj.get_upper() - height))
 
     def _scroll_previous(self):
         """Scroll to previous page."""
-        allocation = self.get_allocation()
         if self.orientation == Gtk.Orientation.HORIZONTAL:
             adj = self.get_hadjustment()
-            new_value = adj.get_value() - allocation.width
+            width = self.get_width()
+            new_value = adj.get_value() - width
             adj.set_value(max(adj.get_lower(), new_value))
         else:
             adj = self.get_vadjustment()
-            new_value = adj.get_value() - allocation.height
+            height = self.get_height()
+            new_value = adj.get_value() - height
             adj.set_value(max(adj.get_lower(), new_value))
 
     def do_get_preferred_width(self):
@@ -164,16 +168,17 @@ class _TrayViewport(Gtk.ScrolledWindow):
         self._update_scrollable_state()
 
     def _update_scrollable_state(self):
-        allocation = self.get_allocation()
-        if allocation.width <= 1 and allocation.height <= 1:
+        width = self.get_width()
+        height = self.get_height()
+        if width <= 1 and height <= 1:
             return
 
         traybar_min, traybar_nat = self.traybar.get_preferred_size()
 
         if self.orientation == Gtk.Orientation.HORIZONTAL:
-            scrollable = traybar_nat.width > allocation.width
+            scrollable = traybar_nat.width > width
         else:
-            scrollable = traybar_nat.height > allocation.height
+            scrollable = traybar_nat.height > height
 
         if scrollable != self._scrollable:
             self._scrollable = scrollable
