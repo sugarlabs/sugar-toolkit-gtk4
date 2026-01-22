@@ -168,5 +168,14 @@ class ComboBox(Gtk.ComboBox):
         """
         self._model.clear()
 
+    def get_item_count(self):
+        """
+        Get the number of items in the combo box.
+
+        Returns:
+            int, number of items (including separators)
+        """
+        return len(self._model)
+
     def _is_separator(self, model, row, data):
         return model[row][3]
