@@ -106,29 +106,10 @@ class MenuItem(Gtk.Button):
 
         # Style the button to look like a menu item
         self.add_css_class("menuitem")
-        self._apply_menu_item_styling()
 
         # Connect signals for accelerator handling
         self.connect("map", self._on_mapped)
         self.connect("unmap", self._on_unmapped)
-
-    def _apply_menu_item_styling(self):
-        """Apply CSS styling to make button look like a menu item."""
-        css = """
-        button.menuitem {
-            background: transparent;
-            border: none;
-            border-radius: 4px;
-            padding: 4px 6px;
-        }
-        button.menuitem:hover {
-            background: alpha(@theme_selected_bg_color, 0.1);
-        }
-        button.menuitem:active {
-            background: alpha(@theme_selected_bg_color, 0.2);
-        }
-        """
-        style.apply_css_to_widget(self, css)
 
     def _on_mapped(self, widget):
         """Handle widget being mapped (shown)."""
