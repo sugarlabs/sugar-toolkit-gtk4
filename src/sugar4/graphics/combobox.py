@@ -177,5 +177,60 @@ class ComboBox(Gtk.ComboBox):
         """
         return len(self._model)
 
+    def get_model(self):
+        """
+        Get the underlying list model.
+
+        Returns:
+            Gtk.ListStore, the model containing combo items
+        """
+        return self._model
+
+    def get_item_at(self, index):
+        """
+        Get item data at the given index.
+
+        Args:
+            index (int): index of item to retrieve
+
+        Returns:
+            tuple of (value, text, pixbuf, is_separator) or None
+        """
+        if 0 <= index < len(self._model):
+            return self._model[index]
+        return None
+
+    def has_text_renderer(self):
+        """
+        Check if a text renderer has been created.
+
+        Returns:
+            bool, True if text renderer exists
+        """
+        return self._text_renderer is not None
+
+    def has_icon_renderer(self):
+        """
+        Check if an icon renderer has been created.
+
+        Returns:
+            bool, True if icon renderer exists
+        """
+        return self._icon_renderer is not None
+
+    def is_separator_at(self, index):
+        """
+        Check if item at index is a separator.
+
+        Args:
+            index (int): index to check
+
+        Returns:
+            bool, True if item is a separator
+        """
+        if 0 <= index < len(self._model):
+            return self._model[index][3]
+        return False
+
     def _is_separator(self, model, row, data):
         return model[row][3]
