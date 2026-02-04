@@ -29,7 +29,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Gdk", "4.0")
 
-from gi.repository import GObject, Gtk, Gdk
+from gi.repository import GObject, Gtk, Gdk, Graphene
 import logging
 from sugar4.graphics import style
 from sugar4.graphics.palette import ToolInvoker
