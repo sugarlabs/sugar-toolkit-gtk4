@@ -34,12 +34,21 @@ from .icon import (
     LARGE_ICON_SIZE,
 )
 
+from .iconentry import (
+    IconEntry,
+    ICON_ENTRY_PRIMARY,
+    ICON_ENTRY_SECONDARY,
+)
+
 # from .tray import (HTray, VTray, TrayButton, TrayIcon,
 #                    ALIGN_TO_START, ALIGN_TO_END, GRID_CELL_SIZE)
 # from .window import Window, UnfullscreenButton
 
 
 __all__ = [
+    "IconEntry",
+    "ICON_ENTRY_PRIMARY",
+    "ICON_ENTRY_SECONDARY",
     "XoColor",
     "Icon",
     "EventIcon",

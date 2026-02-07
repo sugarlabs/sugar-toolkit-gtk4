@@ -150,10 +150,10 @@ class IconEntry(Gtk.Entry):
                 )
                 return
 
-            has_w, width, has_h, height = (
-                handle.get_intrinsic_size_in_pixels()
-            )
-            if not has_w or not has_h or width <= 0 or height <= 0:
+            svg_rect = handle.get_intrinsic_size_in_pixels()
+            if svg_rect[0]:  # has_width
+                width, height = svg_rect[1], svg_rect[2]
+            else:
                 width, height = _ICON_SIZE, _ICON_SIZE
 
             surface = cairo.ImageSurface(
