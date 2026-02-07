@@ -46,13 +46,7 @@ Example usage::
 import logging
 
 import cairo
-
-from gi.repository import GObject
-from gi.repository import Gtk
-from gi.repository import Gdk
-from gi.repository import GdkPixbuf
-from gi.repository import GLib
-from gi.repository import Rsvg
+from gi.repository import Gdk, GdkPixbuf, GLib, GObject, Gtk, Rsvg
 
 from sugar4.graphics import style
 from sugar4.graphics.icon import _SVGLoader
@@ -95,9 +89,7 @@ class IconEntry(Gtk.Entry):
         """
         display = Gdk.Display.get_default()
         if display is None:
-            logging.warning(
-                "IconEntry set_icon_from_name: no display available."
-            )
+            logging.warning("IconEntry set_icon_from_name: no display available.")
             return
 
         icon_theme = Gtk.IconTheme.get_for_display(display)
@@ -112,8 +104,7 @@ class IconEntry(Gtk.Entry):
 
         if not icon_paintable:
             logging.warning(
-                "IconEntry set_icon_from_name: icon '%s' not found "
-                "in the theme.",
+                "IconEntry set_icon_from_name: icon '%s' not found in the theme.",
                 name,
             )
             return
@@ -121,8 +112,7 @@ class IconEntry(Gtk.Entry):
         file_obj = icon_paintable.get_file()
         if not file_obj:
             logging.warning(
-                "IconEntry set_icon_from_name: could not resolve "
-                "file for icon '%s'.",
+                "IconEntry set_icon_from_name: could not resolve file for icon '%s'.",
                 name,
             )
             return
@@ -130,8 +120,7 @@ class IconEntry(Gtk.Entry):
         file_name = file_obj.get_path()
         if not file_name:
             logging.warning(
-                "IconEntry set_icon_from_name: no local path for "
-                "icon '%s'.",
+                "IconEntry set_icon_from_name: no local path for icon '%s'.",
                 name,
             )
             return
@@ -144,8 +133,7 @@ class IconEntry(Gtk.Entry):
             handle = self._loader.load(file_name, entities, True)
             if handle is None:
                 logging.warning(
-                    "IconEntry set_icon_from_name: failed to load "
-                    "SVG icon '%s'.",
+                    "IconEntry set_icon_from_name: failed to load SVG icon '%s'.",
                     name,
                 )
                 return
@@ -156,9 +144,7 @@ class IconEntry(Gtk.Entry):
             else:
                 width, height = _ICON_SIZE, _ICON_SIZE
 
-            surface = cairo.ImageSurface(
-                cairo.FORMAT_ARGB32, int(width), int(height)
-            )
+            surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, int(width), int(height))
             context = cairo.Context(surface)
             viewport = Rsvg.Rectangle()
             viewport.x = 0
@@ -167,13 +153,10 @@ class IconEntry(Gtk.Entry):
             viewport.height = float(height)
             handle.render_document(context, viewport)
 
-            pixbuf = Gdk.pixbuf_get_from_surface(
-                surface, 0, 0, int(width), int(height)
-            )
+            pixbuf = Gdk.pixbuf_get_from_surface(surface, 0, 0, int(width), int(height))
             if pixbuf is None:
                 logging.warning(
-                    "IconEntry set_icon_from_name: failed to render "
-                    "SVG icon '%s'.",
+                    "IconEntry set_icon_from_name: failed to render SVG icon '%s'.",
                     name,
                 )
                 return
@@ -186,8 +169,7 @@ class IconEntry(Gtk.Entry):
                 self.set_icon(position, pixbuf)
             except GLib.Error as e:
                 logging.warning(
-                    "IconEntry set_icon_from_name: failed to load "
-                    "icon '%s': %s",
+                    "IconEntry set_icon_from_name: failed to load icon '%s': %s",
                     name,
                     e,
                 )

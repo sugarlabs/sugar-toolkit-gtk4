@@ -1,8 +1,8 @@
 """Tests for IconEntry module."""
 
-import unittest
-import sys
 import os
+import sys
+import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
@@ -10,7 +10,7 @@ try:
     import gi
 
     gi.require_version("Gtk", "4.0")
-    from gi.repository import Gtk, Gdk, GdkPixbuf
+    from gi.repository import Gdk, GdkPixbuf, Gtk
 
     GTK_AVAILABLE = True
 except (ImportError, ValueError):
@@ -18,9 +18,9 @@ except (ImportError, ValueError):
 
 if GTK_AVAILABLE:
     from sugar4.graphics.iconentry import (
-        IconEntry,
         ICON_ENTRY_PRIMARY,
         ICON_ENTRY_SECONDARY,
+        IconEntry,
     )
 
 
@@ -50,9 +50,7 @@ class TestIconEntry(unittest.TestCase):
 
     def test_set_icon_with_pixbuf(self):
         """Test setting icon from a pixbuf."""
-        pixbuf = GdkPixbuf.Pixbuf.new(
-            GdkPixbuf.Colorspace.RGB, True, 8, 16, 16
-        )
+        pixbuf = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, True, 8, 16, 16)
         pixbuf.fill(0xFF0000FF)
         # Should not raise
         self.entry.set_icon(ICON_ENTRY_PRIMARY, pixbuf)
@@ -64,9 +62,7 @@ class TestIconEntry(unittest.TestCase):
 
     def test_remove_icon(self):
         """Test removing an icon."""
-        pixbuf = GdkPixbuf.Pixbuf.new(
-            GdkPixbuf.Colorspace.RGB, True, 8, 16, 16
-        )
+        pixbuf = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, True, 8, 16, 16)
         self.entry.set_icon(ICON_ENTRY_PRIMARY, pixbuf)
         # Should not raise
         self.entry.remove_icon(ICON_ENTRY_PRIMARY)
@@ -164,9 +160,7 @@ class TestIconEntry(unittest.TestCase):
     def test_set_icon_from_name_invalid(self):
         """Test set_icon_from_name with non-existent icon name."""
         # Should log a warning but not crash
-        self.entry.set_icon_from_name(
-            ICON_ENTRY_PRIMARY, "nonexistent-icon-name-xyz"
-        )
+        self.entry.set_icon_from_name(ICON_ENTRY_PRIMARY, "nonexistent-icon-name-xyz")
 
     def test_key_controller_attached(self):
         """Test that the key event controller is attached."""
@@ -205,9 +199,7 @@ class TestIconEntryEdgeCases(unittest.TestCase):
     def test_set_icon_both_positions(self):
         """Test setting icons at both positions."""
         entry = IconEntry()
-        pixbuf = GdkPixbuf.Pixbuf.new(
-            GdkPixbuf.Colorspace.RGB, True, 8, 16, 16
-        )
+        pixbuf = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, True, 8, 16, 16)
         entry.set_icon(ICON_ENTRY_PRIMARY, pixbuf)
         entry.set_icon(ICON_ENTRY_SECONDARY, pixbuf)
         # Remove both
