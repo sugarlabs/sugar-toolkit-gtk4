@@ -906,9 +906,9 @@ class Activity(Window):
             return None
 
         try:
-            # GTK4 approach to getting preview
-            allocation = self.canvas.get_allocation()
-            if allocation.width <= 0 or allocation.height <= 0:
+            canvas_width = self.canvas.get_width()
+            canvas_height = self.canvas.get_height()
+            if canvas_width <= 0 or canvas_height <= 0:
                 return None
 
             # For GTK4, we need to use a different approach since snapshot()
@@ -918,12 +918,9 @@ class Activity(Window):
             drawing_widget = self._find_drawable_widget(self.canvas)
 
             if drawing_widget and hasattr(drawing_widget, "snapshot"):
-                # Use the drawable widget for preview
-                widget_allocation = drawing_widget.get_allocation()
-                canvas_width, canvas_height = (
-                    widget_allocation.width,
-                    widget_allocation.height,
-                )
+                widget_width = drawing_widget.get_width()
+                widget_height = drawing_widget.get_height()
+                canvas_width, canvas_height = widget_width, widget_height
 
                 # Create Cairo surface for the widget
                 screenshot_surface = cairo.ImageSurface(
@@ -937,9 +934,7 @@ class Activity(Window):
                 # Try to render the widget
                 try:
                     snapshot = Gtk.Snapshot()
-                    drawing_widget.snapshot(
-                        snapshot, widget_allocation.width, widget_allocation.height
-                    )
+                    drawing_widget.snapshot(snapshot, widget_width, widget_height)
 
                     # Convert snapshot to cairo surface
                     # For now, we'll create a basic preview

@@ -438,10 +438,17 @@ class _Box(Gtk.Box):
         """Render palette using snapshot drawing."""
         Gtk.Widget.do_snapshot(self, snapshot)
 
-        button_alloc = self._toolbar_button.get_allocation()
+        success, bounds = self._toolbar_button.compute_bounds(self)
+        if success:
+            button_x = bounds.get_x()
+            button_width = bounds.get_width()
+        else:
+            button_x = 0
+            button_width = self._toolbar_button.get_width()
+
         my_width = self.get_width()
 
-        if my_width > 0:
+        if my_width > 0 and button_width > 0:
             color = Gdk.RGBA()
             color.red = 0.7
             color.green = 0.7
@@ -451,15 +458,14 @@ class _Box(Gtk.Box):
             line_width = style.FOCUS_LINE_WIDTH * 2
 
             rect1 = Graphene.Rect()
-            rect1.init(0, 0, button_alloc.x + style.FOCUS_LINE_WIDTH, line_width)
+            rect1.init(0, 0, button_x + style.FOCUS_LINE_WIDTH, line_width)
             snapshot.append_color(color, rect1)
 
             rect2 = Graphene.Rect()
             rect2.init(
-                button_alloc.x + button_alloc.width - style.FOCUS_LINE_WIDTH,
+                button_x + button_width - style.FOCUS_LINE_WIDTH,
                 0,
-                my_width
-                - (button_alloc.x + button_alloc.width - style.FOCUS_LINE_WIDTH),
+                my_width - (button_x + button_width - style.FOCUS_LINE_WIDTH),
                 line_width,
             )
             snapshot.append_color(color, rect2)
