@@ -16,7 +16,7 @@ It shows the basic structure and key features of a Sugar activity.
    :linenos:
 
 Creative Studio Activity Example
------------------
+--------------------------------
 
 This example demonstrates an advanced Sugar creative activity with a custom toolbar, support for keyboard shortcuts (accelerators), file handling, and other features.
 
@@ -26,7 +26,7 @@ This example demonstrates an advanced Sugar creative activity with a custom tool
    :linenos:
 
 Hello_World_Dodge Example
--------------
+-------------------------
 
 A simple dodging ball game made with new toolkit.
 
@@ -75,7 +75,6 @@ Other Examples
 --------------
 
 * **Animator**: :download:`animator_example.py <../examples/animator_example.py>`
-* **Hello World**: :download:`hello_world_dodge.py <../examples/hello_world_dodge.py>`
 * **Menu Item**: :download:`menuitem_example.py <../examples/menuitem_example.py>`
 * **Object Chooser**: :download:`objectchooser_example.py <../examples/objectchooser_example.py>`
 * **Radio Palette**: :download:`radio_palette_example.py <../examples/radio_palette_example.py>`
