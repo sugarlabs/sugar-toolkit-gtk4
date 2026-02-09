@@ -21,7 +21,7 @@ sudo make
 show-green "Building documentation"
 ./make-doc.sh
 mkdir deploy
-cp -r doc/_build/html deploy/sugar3
+cp -r doc/_build/html deploy/sugar4
 touch deploy/.nojekyll
 # create an index.html so that users don't become confused
 show-green "Writing index.html"
