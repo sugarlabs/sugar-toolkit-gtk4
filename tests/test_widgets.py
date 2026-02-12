@@ -31,6 +31,9 @@ class MockActivity:
         self._signals = {}
         self._stop_buttons = []
 
+    def get_stop_buttons(self):
+        return self._stop_buttons
+
     def connect(self, signal, callback):
         if signal not in self._signals:
             self._signals[signal] = []
@@ -87,7 +90,7 @@ class TestActivityWidgets(unittest.TestCase):
         self.assertIsNotNone(button)
         self.assertEqual(button.props.tooltip, "Stop")
         self.assertEqual(button.props.accelerator, "<Ctrl>Q")
-        self.assertIn(button, self.activity._stop_buttons)
+        self.assertIn(button, self.activity.get_stop_buttons())
 
     def test_edit_buttons_creation(self):
         """Test edit buttons can be created."""
