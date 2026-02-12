@@ -245,4 +245,13 @@ class Toolbox(Gtk.Box):
             return tab_label.get_text()
         return None
 
+    def get_notebook(self):
+        """Get the internal notebook widget."""
+        return self._notebook
+
+    def get_separator(self):
+        """Get the separator widget."""
+        return self._separator
+
     current_toolbar = property(get_current_toolbar, set_current_toolbar)
+
