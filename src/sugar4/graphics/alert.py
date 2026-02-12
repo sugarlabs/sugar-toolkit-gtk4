@@ -243,6 +243,11 @@ class Alert(Gtk.Box):
             self._buttons_box.remove(self._buttons[response_id])
             del self._buttons[response_id]
 
+    def get_buttons(self):
+        """Get the buttons dictionary."""
+        return self._buttons
+
+
     def _response(self, response_id):
         """
         Emitting response when we have a result
@@ -370,6 +375,11 @@ class _TimeoutAlert(Alert):
         if hasattr(self, "_timeout_sid"):
             GLib.source_remove(self._timeout_sid)
         Alert._response(self, *args)
+
+    def get_timeout_source_id(self):
+        """Get the timeout source ID."""
+        return self._timeout_sid
+
 
 
 class TimeoutAlert(_TimeoutAlert):
