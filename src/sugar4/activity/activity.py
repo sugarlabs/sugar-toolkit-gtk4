@@ -269,6 +269,15 @@ class _ActivitySession(GObject.GObject):
     def set_main_loop(self, main_loop):
         self._main_loop = main_loop
 
+    def get_activities(self):
+        """Get the list of registered activities."""
+        return self._activities
+
+    def get_will_quit(self):
+        """Get the list of activities that have agreed to quit."""
+        return self._will_quit
+
+
 
 class Activity(Window):
     """
@@ -725,6 +734,31 @@ class Activity(Window):
             canvas.connect("map", self.__canvas_map_cb)
 
     canvas = property(get_canvas, set_canvas)
+
+    def get_busy_count(self):
+        """Get the current busy count."""
+        return self._busy_count
+
+    def get_stop_buttons(self):
+        """Get the list of stop buttons."""
+        return self._stop_buttons
+
+    def get_invites_queue(self):
+        """Get the current invites queue."""
+        return self._invites_queue
+
+    def is_resumed(self):
+        """Check if this activity was resumed from a journal entry."""
+        return self._is_resumed
+
+    def get_jobject(self):
+        """Get the journal object for this activity."""
+        return self._jobject
+
+    def get_session(self):
+        """Get the activity session manager."""
+        return self._session
+
     """
     The :class:`Gtk.Widget` used as canvas, or work area of your
     activity.  A common canvas is :class:`Gtk.ScrolledWindow`.

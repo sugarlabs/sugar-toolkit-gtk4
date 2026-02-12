@@ -249,6 +249,10 @@ class Palette(PaletteWindow):
     def get_full_size_request(self):
         return self._full_request
 
+    def get_content_widget(self):
+        """Get the content widget."""
+        return self._content_widget
+
     def popup(self, immediate=False):
         if self._invoker is not None:
             self._update_full_request()

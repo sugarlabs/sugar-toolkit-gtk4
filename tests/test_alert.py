@@ -50,7 +50,7 @@ class TestAlert(unittest.TestCase):
         """Test removing buttons from alert"""
         self.alert.add_button(1, "Test Button")
         self.alert.remove_button(1)
-        self.assertNotIn(1, self.alert._buttons)
+        self.assertNotIn(1, self.alert.get_buttons())
 
     def test_add_entry(self):
         """Test adding entry to alert"""
@@ -76,8 +76,8 @@ class TestConfirmationAlert(unittest.TestCase):
     def test_confirmation_alert_creation(self):
         """Test confirmation alert has OK and Cancel buttons"""
         self.assertIsInstance(self.alert, ConfirmationAlert)
-        self.assertIn(Gtk.ResponseType.OK, self.alert._buttons)
-        self.assertIn(Gtk.ResponseType.CANCEL, self.alert._buttons)
+        self.assertIn(Gtk.ResponseType.OK, self.alert.get_buttons())
+        self.assertIn(Gtk.ResponseType.CANCEL, self.alert.get_buttons())
 
 
 class TestErrorAlert(unittest.TestCase):
@@ -87,7 +87,7 @@ class TestErrorAlert(unittest.TestCase):
     def test_error_alert_creation(self):
         """Test error alert has OK button"""
         self.assertIsInstance(self.alert, ErrorAlert)
-        self.assertIn(Gtk.ResponseType.OK, self.alert._buttons)
+        self.assertIn(Gtk.ResponseType.OK, self.alert.get_buttons())
 
 
 class TestTimeoutAlert(unittest.TestCase):
@@ -97,14 +97,14 @@ class TestTimeoutAlert(unittest.TestCase):
     def test_timeout_alert_creation(self):
         """Test timeout alert creation"""
         self.assertIsInstance(self.alert, TimeoutAlert)
-        self.assertIn(Gtk.ResponseType.OK, self.alert._buttons)
-        self.assertIn(Gtk.ResponseType.CANCEL, self.alert._buttons)
+        self.assertIn(Gtk.ResponseType.OK, self.alert.get_buttons())
+        self.assertIn(Gtk.ResponseType.CANCEL, self.alert.get_buttons())
 
     def tearDown(self):
         if hasattr(self.alert, "_timeout_sid"):
             from gi.repository import GLib
 
-            GLib.source_remove(self.alert._timeout_sid)
+            GLib.source_remove(self.alert.get_timeout_source_id())
 
 
 class TestNotifyAlert(unittest.TestCase):
@@ -114,13 +114,13 @@ class TestNotifyAlert(unittest.TestCase):
     def test_notify_alert_creation(self):
         """Test notify alert creation"""
         self.assertIsInstance(self.alert, NotifyAlert)
-        self.assertIn(Gtk.ResponseType.OK, self.alert._buttons)
+        self.assertIn(Gtk.ResponseType.OK, self.alert.get_buttons())
 
     def tearDown(self):
         if hasattr(self.alert, "_timeout_sid"):
             from gi.repository import GLib
 
-            GLib.source_remove(self.alert._timeout_sid)
+            GLib.source_remove(self.alert.get_timeout_source_id())
 
 
 if __name__ == "__main__":

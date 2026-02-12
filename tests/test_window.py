@@ -67,9 +67,9 @@ def test_window_alert_add_remove(gtk_app):
     win = Window(application=gtk_app)
     alert = Gtk.Label(label="Alert")
     win.add_alert(alert)
-    assert alert in win._alerts
+    assert alert in win.get_alerts()
     win.remove_alert(alert)
-    assert alert not in win._alerts
+    assert alert not in win.get_alerts()
 
 
 def test_window_enable_fullscreen_mode_property(gtk_app):

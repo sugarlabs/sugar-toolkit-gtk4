@@ -86,6 +86,14 @@ class Group(GObject.GObject):
         self._palettes.remove(palette)
         del self._sig_ids[palette]
 
+    def get_palettes(self):
+        """Get the list of palettes."""
+        return self._palettes
+
+    def get_sig_ids(self):
+        """Get the signal IDs dictionary."""
+        return self._sig_ids
+
     def popdown(self):
         for palette in self._palettes:
             if palette.is_up():

@@ -76,21 +76,21 @@ class TestObjectChooser(unittest.TestCase):
     def test_objectchooser_creation_no_parent(self):
         """Test ObjectChooser creation without parent."""
         chooser = ObjectChooser()
-        self.assertEqual(chooser._parent_xid, 0)
-        self.assertIsNone(chooser._what_filter)
-        self.assertIsNone(chooser._filter_type)
-        self.assertFalse(chooser._show_preview)
+        self.assertEqual(chooser.get_parent_xid(), 0)
+        self.assertIsNone(chooser.get_what_filter())
+        self.assertIsNone(chooser.get_filter_type())
+        self.assertFalse(chooser.get_show_preview())
 
     def test_objectchooser_creation_with_parent(self):
         """Test ObjectChooser creation with parent widget."""
         parent = Gtk.Box()
         chooser = ObjectChooser(parent=parent)
-        self.assertIsNotNone(chooser._parent_xid)
+        self.assertIsNotNone(chooser.get_parent_xid())
 
     def test_objectchooser_creation_with_int_parent(self):
         """Test ObjectChooser creation with integer parent."""
         chooser = ObjectChooser(parent=12345)
-        self.assertEqual(chooser._parent_xid, 12345)
+        self.assertEqual(chooser.get_parent_xid(), 12345)
 
     def test_objectchooser_creation_with_filters(self):
         """Test ObjectChooser creation with various filters."""
@@ -99,9 +99,9 @@ class TestObjectChooser(unittest.TestCase):
             filter_type=FILTER_TYPE_GENERIC_MIME,
             show_preview=True,
         )
-        self.assertEqual(chooser._what_filter, "image/*")
-        self.assertEqual(chooser._filter_type, FILTER_TYPE_GENERIC_MIME)
-        self.assertTrue(chooser._show_preview)
+        self.assertEqual(chooser.get_what_filter(), "image/*")
+        self.assertEqual(chooser.get_filter_type(), FILTER_TYPE_GENERIC_MIME)
+        self.assertTrue(chooser.get_show_preview())
 
     def test_objectchooser_invalid_filter_type(self):
         """Test ObjectChooser with invalid filter type."""
@@ -118,7 +118,7 @@ class TestObjectChooser(unittest.TestCase):
 
         for filter_type in valid_types:
             chooser = ObjectChooser(filter_type=filter_type)
-            self.assertEqual(chooser._filter_type, filter_type)
+            self.assertEqual(chooser.get_filter_type(), filter_type)
 
     @patch("dbus.SessionBus")
     @patch("sugar4.datastore.datastore.get")
@@ -176,8 +176,8 @@ class TestObjectChooser(unittest.TestCase):
 
         # Test with matching chooser_id
         chooser._ObjectChooser__chooser_response_cb("test_chooser_id", "object_123")
-        self.assertEqual(chooser._response_code, Gtk.ResponseType.ACCEPT)
-        self.assertEqual(chooser._object_id, "object_123")
+        self.assertEqual(chooser.get_response_code(), Gtk.ResponseType.ACCEPT)
+        self.assertEqual(chooser.get_object_id(), "object_123")
         chooser._cleanup.assert_called_once()
 
         # Test with non-matching chooser_id
@@ -194,7 +194,7 @@ class TestObjectChooser(unittest.TestCase):
 
         # Test with matching chooser_id
         chooser._ObjectChooser__chooser_cancelled_cb("test_chooser_id")
-        self.assertEqual(chooser._response_code, Gtk.ResponseType.CANCEL)
+        self.assertEqual(chooser.get_response_code(), Gtk.ResponseType.CANCEL)
         chooser._cleanup.assert_called_once()
 
         # Test with non-matching chooser_id
@@ -209,7 +209,7 @@ class TestObjectChooser(unittest.TestCase):
         chooser._cleanup = Mock()
 
         chooser._ObjectChooser__name_owner_changed_cb("service", "old", "new")
-        self.assertEqual(chooser._response_code, Gtk.ResponseType.CANCEL)
+        self.assertEqual(chooser.get_response_code(), Gtk.ResponseType.CANCEL)
         chooser._cleanup.assert_called_once()
 
 
