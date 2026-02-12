@@ -358,6 +358,11 @@ class Window(Gtk.ApplicationWindow):
             self._alerts.remove(alert)
             self._overlay.remove_overlay(alert)
 
+    def get_alerts(self):
+        """Get the list of alerts."""
+        return self._alerts
+
+
     def set_enable_fullscreen_mode(self, enable):
         """
         Set enable fullscreen mode.
