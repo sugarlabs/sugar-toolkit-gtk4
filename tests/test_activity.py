@@ -348,6 +348,82 @@ class TestActivity(unittest.TestCase):
         preview = activity.get_preview()
         self.assertIsNone(preview)
 
+    def test_preview_returns_none_for_zero_size_canvas(self):
+        """Test preview returns None when canvas has zero dimensions."""
+        activity = Activity(self.handle)
+        canvas = Gtk.Label(label="test")
+        activity.set_canvas(canvas)
+        # Canvas not realized → get_width()/get_height() return 0
+        preview = activity.get_preview()
+        self.assertIsNone(preview)
+
+    def test_preview_returns_none_without_native(self):
+        """Test preview returns None when canvas has no native ancestor."""
+        activity = Activity(self.handle)
+        canvas = Gtk.Label(label="test")
+        activity.set_canvas(canvas)
+        # Mock non-zero size but no native window
+        with patch.object(canvas, "get_width", return_value=100), \
+             patch.object(canvas, "get_height", return_value=100), \
+             patch.object(canvas, "get_native", return_value=None):
+            preview = activity.get_preview()
+            self.assertIsNone(preview)
+
+    def test_preview_returns_png_bytes(self):
+        """Test preview returns valid PNG data via the GTK4 pipeline."""
+        import cairo as _cairo
+
+        activity = Activity(self.handle)
+        canvas = Gtk.Label(label="test")
+        activity.set_canvas(canvas)
+
+        # Build a small real PNG to use as the fake texture output
+        surf = _cairo.ImageSurface(_cairo.FORMAT_ARGB32, 80, 60)
+        cr = _cairo.Context(surf)
+        cr.set_source_rgb(0.2, 0.4, 0.8)
+        cr.paint()
+        del cr
+        import io as _io
+        buf = _io.BytesIO()
+        surf.write_to_png(buf)
+        fake_png = buf.getvalue()
+
+        # Mock the GTK4 rendering pipeline:
+        #   canvas.get_width/get_height → 80×60
+        #   canvas.get_native() → mock native
+        #   native.get_renderer() → mock renderer
+        #   Gtk.WidgetPaintable.new() → mock paintable
+        #   renderer.render_texture() → mock texture
+        #   texture.save_to_png_bytes() → GLib.Bytes with our PNG
+        mock_texture = MagicMock()
+        mock_texture.save_to_png_bytes.return_value = GLib.Bytes.new(fake_png)
+
+        mock_renderer = MagicMock()
+        mock_renderer.render_texture.return_value = mock_texture
+
+        mock_native = MagicMock()
+        mock_native.get_renderer.return_value = mock_renderer
+
+        mock_node = MagicMock()
+        mock_snapshot = MagicMock()
+        mock_snapshot.to_node.return_value = mock_node
+
+        mock_paintable = MagicMock()
+
+        with patch.object(canvas, "get_width", return_value=80), \
+             patch.object(canvas, "get_height", return_value=60), \
+             patch.object(canvas, "get_native", return_value=mock_native), \
+             patch("sugar4.activity.activity.Gtk.WidgetPaintable") as wp_cls, \
+             patch("sugar4.activity.activity.Gtk.Snapshot", return_value=mock_snapshot):
+            wp_cls.new.return_value = mock_paintable
+
+            preview = activity.get_preview()
+
+        self.assertIsNotNone(preview)
+        self.assertIsInstance(preview, bytes)
+        # Valid PNG starts with the 8-byte PNG signature
+        self.assertTrue(preview[:8] == b"\x89PNG\r\n\x1a\n")
+
     def test_session_management(self):
         """Test session management functionality."""
         activity = Activity(self.handle)

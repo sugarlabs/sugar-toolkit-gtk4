@@ -174,7 +174,7 @@ gi.require_version("GLib", "2.0")
 gi.require_version("GObject", "2.0")
 gi.require_version("Gio", "2.0")
 
-from gi.repository import Gdk, Gio, GLib, GObject, Gtk
+from gi.repository import Gdk, Gio, GLib, GObject, Graphene, Gtk
 
 try:
     import cairo
@@ -895,8 +895,9 @@ class Activity(Window):
         image data in PNG format with a width and height of
         :attr:`~sugar4.activity.activity.PREVIEW_SIZE` pixels.
 
-        The method creates a Cairo surface for the canvas widget,
-        draws on it, then resizes to a surface with the preview size.
+        The method captures the canvas widget using GTK4's
+        WidgetPaintable API, then scales the result to the preview
+        size.
         """
         if not HAS_CAIRO:
             logging.warning("Cairo not available, cannot generate preview")
@@ -906,97 +907,38 @@ class Activity(Window):
             return None
 
         try:
-            # GTK4 approach to getting preview
-            allocation = self.canvas.get_allocation()
-            if allocation.width <= 0 or allocation.height <= 0:
+            canvas_width = self.canvas.get_width()
+            canvas_height = self.canvas.get_height()
+            if canvas_width <= 0 or canvas_height <= 0:
                 return None
 
-            # For GTK4, we need to use a different approach since snapshot()
-            # is not available on all widgets
+            native = self.canvas.get_native()
+            if native is None:
+                return None
 
-            # First, try to find a drawable widget (like DrawingArea)
-            drawing_widget = self._find_drawable_widget(self.canvas)
+            renderer = native.get_renderer()
+            if renderer is None:
+                return None
 
-            if drawing_widget and hasattr(drawing_widget, "snapshot"):
-                # Use the drawable widget for preview
-                widget_allocation = drawing_widget.get_allocation()
-                canvas_width, canvas_height = (
-                    widget_allocation.width,
-                    widget_allocation.height,
-                )
+            # GTK4: WidgetPaintable captures any widget's current
+            # rendered state, including all children.
+            paintable = Gtk.WidgetPaintable.new(self.canvas)
+            snapshot = Gtk.Snapshot()
+            paintable.snapshot(snapshot, canvas_width, canvas_height)
+            node = snapshot.to_node()
+            if node is None:
+                return None
 
-                # Create Cairo surface for the widget
-                screenshot_surface = cairo.ImageSurface(
-                    cairo.FORMAT_ARGB32, canvas_width, canvas_height
-                )
-                cr = cairo.Context(screenshot_surface)
+            viewport = Graphene.Rect()
+            viewport.init(0, 0, canvas_width, canvas_height)
+            texture = renderer.render_texture(node, viewport)
 
-                cr.set_source_rgb(1, 1, 1)  # White background
-                cr.paint()
-
-                # Try to render the widget
-                try:
-                    snapshot = Gtk.Snapshot()
-                    drawing_widget.snapshot(
-                        snapshot, widget_allocation.width, widget_allocation.height
-                    )
-
-                    # Convert snapshot to cairo surface
-                    # For now, we'll create a basic preview
-                    cr.set_source_rgb(0.8, 0.8, 0.8)
-                    cr.rectangle(10, 10, canvas_width - 20, canvas_height - 20)
-                    cr.stroke()
-
-                    # Add some indication this is a preview
-                    cr.set_source_rgb(0.5, 0.5, 0.5)
-                    cr.select_font_face(
-                        "Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL
-                    )
-                    cr.set_font_size(14)
-                    cr.move_to(20, 30)
-                    cr.show_text("Activity Preview")
-
-                except Exception as e:
-                    logging.debug(f"Could not snapshot widget: {e}")
-                    cr.set_source_rgb(0.9, 0.9, 0.9)
-                    cr.paint()
-                    cr.set_source_rgb(0.3, 0.3, 0.3)
-                    cr.select_font_face(
-                        "Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD
-                    )
-                    cr.set_font_size(16)
-                    cr.move_to(canvas_width // 4, canvas_height // 2)
-                    cr.show_text("Activity Preview")
-
-            else:
-                # Fallback: create a generic preview
-                canvas_width, canvas_height = 400, 300
-                screenshot_surface = cairo.ImageSurface(
-                    cairo.FORMAT_ARGB32, canvas_width, canvas_height
-                )
-                cr = cairo.Context(screenshot_surface)
-
-                cr.set_source_rgb(0.95, 0.95, 0.95)
-                cr.paint()
-
-                cr.set_source_rgb(0.7, 0.7, 0.7)
-                cr.set_line_width(2)
-                cr.rectangle(5, 5, canvas_width - 10, canvas_height - 10)
-                cr.stroke()
-
-                cr.set_source_rgb(0.3, 0.3, 0.3)
-                cr.select_font_face(
-                    "Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD
-                )
-                cr.set_font_size(18)
-
-                text = f"{self.get_title()} Preview"
-                text_extents = cr.text_extents(text)
-                x = (canvas_width - text_extents.width) / 2
-                y = (canvas_height + text_extents.height) / 2
-
-                cr.move_to(x, y)
-                cr.show_text(text)
+            # Convert the full-resolution texture to a Cairo surface
+            # via PNG so we can scale it down to PREVIEW_SIZE.
+            png_data = texture.save_to_png_bytes()
+            screenshot_surface = cairo.ImageSurface.create_from_png(
+                io.BytesIO(png_data.get_data())
+            )
 
             preview_width, preview_height = PREVIEW_SIZE
             preview_surface = cairo.ImageSurface(
@@ -1027,22 +969,6 @@ class Activity(Window):
         except Exception as e:
             logging.error(f"Error generating preview: {e}")
             return None
-
-    def _find_drawable_widget(self, widget):
-        """Find a drawable widget in the widget hierarchy."""
-        if isinstance(widget, Gtk.DrawingArea):
-            return widget
-
-        # If it's a container, search children
-        if hasattr(widget, "get_first_child"):
-            child = widget.get_first_child()
-            while child:
-                drawable = self._find_drawable_widget(child)
-                if drawable:
-                    return drawable
-                child = child.get_next_sibling()
-
-        return None
 
     def _get_buddies(self):
         """Get buddies information for sharing."""
