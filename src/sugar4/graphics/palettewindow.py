@@ -1540,6 +1540,10 @@ class ToolInvoker(WidgetInvoker):
         child = widget.get_child() if hasattr(widget, "get_child") else widget
         self.attach_widget(widget, child)
 
+    def get_tool(self):
+        """Get the tool widget."""
+        return self._tool
+
     def _get_alignments(self):
         if not self._widget or not self._widget.get_parent():
             return super()._get_alignments()

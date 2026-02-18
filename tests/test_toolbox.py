@@ -196,7 +196,7 @@ class TestToolbox(unittest.TestCase):
         self.toolbox.add_toolbar("Single", toolbar)
 
         # With single toolbar, tabs should not be shown
-        notebook = self.toolbox._notebook
+        notebook = self.toolbox.get_notebook()
         self.assertFalse(notebook.get_show_tabs())
 
     def test_multiple_toolbar_tabs_shown(self):
@@ -207,7 +207,7 @@ class TestToolbox(unittest.TestCase):
         self.toolbox.add_toolbar("First", toolbar1)
 
         # Still only one toolbar
-        notebook = self.toolbox._notebook
+        notebook = self.toolbox.get_notebook()
         self.assertFalse(notebook.get_show_tabs())
 
         # Add second toolbar
@@ -218,8 +218,8 @@ class TestToolbox(unittest.TestCase):
 
     def test_toolbox_styling(self):
         """Test that toolbox has correct CSS classes."""
-        notebook = self.toolbox._notebook
-        separator = self.toolbox._separator
+        notebook = self.toolbox.get_notebook()
+        separator = self.toolbox.get_separator()
 
         self.assertTrue(notebook.has_css_class("toolbox"))
         self.assertTrue(separator.has_css_class("toolbox-separator"))

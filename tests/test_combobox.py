@@ -34,9 +34,9 @@ class TestComboBox(unittest.TestCase):
         """Test basic combobox creation."""
         self.assertIsInstance(self.combo, ComboBox)
         self.assertIsInstance(self.combo, Gtk.ComboBox)
-        self.assertIsNotNone(self.combo._model)
-        self.assertIsNone(self.combo._text_renderer)
-        self.assertIsNone(self.combo._icon_renderer)
+        self.assertIsNotNone(self.combo.get_model())
+        self.assertFalse(self.combo.has_text_renderer())
+        self.assertFalse(self.combo.has_icon_renderer())
 
     def test_append_text_item(self):
         """Test appending text-only items."""
@@ -44,18 +44,18 @@ class TestComboBox(unittest.TestCase):
         self.combo.append_item("value2", "Text 2")
 
         # Check that model has items
-        self.assertEqual(len(self.combo._model), 2)
+        self.assertEqual(self.combo.get_item_count(), 2)
 
         # Check first item
-        row = self.combo._model[0]
+        row = self.combo.get_item_at(0)
         self.assertEqual(row[0], "value1")  # value
         self.assertEqual(row[1], "Text 1")  # text
         self.assertIsNone(row[2])  # pixbuf
         self.assertFalse(row[3])  # is_separator
 
         # Check text renderer was created
-        self.assertIsNotNone(self.combo._text_renderer)
-        self.assertIsNone(self.combo._icon_renderer)
+        self.assertTrue(self.combo.has_text_renderer())
+        self.assertFalse(self.combo.has_icon_renderer())
 
     def test_append_item_with_icon_name(self):
         """Test appending items with icon names."""
@@ -63,12 +63,12 @@ class TestComboBox(unittest.TestCase):
             self.combo.append_item("value1", "Text 1", icon_name="document-new")
 
             # Check that both renderers were created
-            self.assertIsNotNone(self.combo._text_renderer)
-            self.assertIsNotNone(self.combo._icon_renderer)
+            self.assertTrue(self.combo.has_text_renderer())
+            self.assertTrue(self.combo.has_icon_renderer())
 
             # Check item was added
-            self.assertEqual(len(self.combo._model), 1)
-            row = self.combo._model[0]
+            self.assertEqual(self.combo.get_item_count(), 1)
+            row = self.combo.get_item_at(0)
             self.assertEqual(row[0], "value1")
             self.assertEqual(row[1], "Text 1")
             self.assertIsNotNone(row[2])  # pixbuf should be created
@@ -95,10 +95,10 @@ class TestComboBox(unittest.TestCase):
         self.combo.append_separator()
         self.combo.append_item("value2", "Text 2")
 
-        self.assertEqual(len(self.combo._model), 3)
+        self.assertEqual(self.combo.get_item_count(), 3)
 
         # Check separator row
-        separator_row = self.combo._model[1]
+        separator_row = self.combo.get_item_at(1)
         self.assertEqual(separator_row[0], 0)  # value
         self.assertIsNone(separator_row[1])  # text
         self.assertIsNone(separator_row[2])  # pixbuf
@@ -159,11 +159,11 @@ class TestComboBox(unittest.TestCase):
         self.combo.append_item("value2", "Text 2")
         self.combo.append_separator()
 
-        self.assertEqual(len(self.combo._model), 3)
+        self.assertEqual(self.combo.get_item_count(), 3)
 
         # Remove all
         self.combo.remove_all()
-        self.assertEqual(len(self.combo._model), 0)
+        self.assertEqual(self.combo.get_item_count(), 0)
 
         # Value should be None after clearing
         self.assertIsNone(self.combo.get_value())
@@ -173,27 +173,24 @@ class TestComboBox(unittest.TestCase):
         self.combo.append_item("value1", "Text 1")
         self.combo.append_separator()
 
-        # Test separator detection
-        row_0 = self.combo._model.get_iter_first()
-        row_1 = self.combo._model.iter_next(row_0)
-
-        self.assertFalse(self.combo._is_separator(self.combo._model, row_0, None))
-        self.assertTrue(self.combo._is_separator(self.combo._model, row_1, None))
+        # Test separator detection using public API
+        self.assertFalse(self.combo.is_separator_at(0))
+        self.assertTrue(self.combo.is_separator_at(1))
 
     def test_icon_only_items(self):
         """Test adding icon-only items (no text)."""
         try:
             self.combo.append_item("icon_value", None, icon_name="document-new")
 
-            self.assertEqual(len(self.combo._model), 1)
-            row = self.combo._model[0]
+            self.assertEqual(self.combo.get_item_count(), 1)
+            row = self.combo.get_item_at(0)
             self.assertEqual(row[0], "icon_value")
             self.assertIsNone(row[1])  # no text
             self.assertIsNotNone(row[2])  # pixbuf should exist
 
             # Should have icon renderer but no text renderer
-            self.assertIsNotNone(self.combo._icon_renderer)
-            self.assertIsNone(self.combo._text_renderer)
+            self.assertTrue(self.combo.has_icon_renderer())
+            self.assertFalse(self.combo.has_text_renderer())
         except ValueError:
             # Icon might not exist in test environment
             pass
@@ -213,11 +210,11 @@ class TestComboBox(unittest.TestCase):
             # Icon only
             self.combo.append_item("icon_only", None, icon_name="edit-copy")
 
-            self.assertEqual(len(self.combo._model), 4)
+            self.assertEqual(self.combo.get_item_count(), 4)
 
             # Both renderers should be created
-            self.assertIsNotNone(self.combo._text_renderer)
-            self.assertIsNotNone(self.combo._icon_renderer)
+            self.assertTrue(self.combo.has_text_renderer())
+            self.assertTrue(self.combo.has_icon_renderer())
 
             # Test accessing different items
             self.combo.set_active(0)
@@ -237,9 +234,9 @@ class TestComboBox(unittest.TestCase):
         try:
             # Add an icon and verify renderer was created
             self.combo.append_item("test", "Test", icon_name="document-new")
-            if self.combo._icon_renderer:
+            if self.combo.has_icon_renderer():
                 # Icon renderer should be created (GTK4 doesn't have stock_size)
-                self.assertIsNotNone(self.combo._icon_renderer)
+                self.assertTrue(self.combo.has_icon_renderer())
         except (ValueError, AttributeError):
             # Skip if icon system not available
             pass
@@ -268,7 +265,7 @@ class TestComboBox(unittest.TestCase):
     def test_model_structure(self):
         """Test the internal model structure."""
         # Check model column types
-        model = self.combo._model
+        model = self.combo.get_model()
         self.assertEqual(model.get_n_columns(), 4)
 
         # Column types should be: object, string, pixbuf, boolean
@@ -346,7 +343,7 @@ class TestComboBoxEdgeCases(unittest.TestCase):
         combo.append_item("empty", "")
         combo.append_item("none_text", None)
 
-        self.assertEqual(len(combo._model), 2)
+        self.assertEqual(combo.get_item_count(), 2)
 
         combo.set_active(0)
         self.assertEqual(combo.get_value(), "empty")
@@ -369,10 +366,10 @@ class TestComboBoxEdgeCases(unittest.TestCase):
         for i, text in enumerate(unicode_texts):
             combo.append_item(f"value_{i}", text)
 
-        self.assertEqual(len(combo._model), len(unicode_texts))
+        self.assertEqual(combo.get_item_count(), len(unicode_texts))
 
         for i, expected_text in enumerate(unicode_texts):
-            row = combo._model[i]
+            row = combo.get_item_at(i)
             self.assertEqual(row[1], expected_text)
 
 
