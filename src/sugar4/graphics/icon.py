@@ -249,7 +249,7 @@ class _IconBuffer:
                 self.width,
                 1,
                 Gtk.TextDirection.NONE,
-                Gtk.IconLookupFlags.NONE,
+                0,
             )
 
             if icon_paintable:

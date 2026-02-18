@@ -99,7 +99,7 @@ class IconEntry(Gtk.Entry):
             _ICON_SIZE,
             1,
             Gtk.TextDirection.NONE,
-            Gtk.IconLookupFlags.NONE,
+            0,
         )
 
         if not icon_paintable:
