@@ -16,6 +16,7 @@ from sugar4.graphics.alert import (
     TimeoutAlert,
     NotifyAlert,
     _TimeoutAlert,
+    _TimeoutIcon,
 )
 
 
@@ -121,6 +122,49 @@ class TestNotifyAlert(unittest.TestCase):
             from gi.repository import GLib
 
             GLib.source_remove(self.alert._timeout_sid)
+
+
+class TestTimeoutIcon(unittest.TestCase):
+    def setUp(self):
+        self.icon = _TimeoutIcon()
+
+    def test_set_text_with_int(self):
+        """Test set_text converts int to string (countdown passes integers)."""
+        self.icon.set_text(5)
+        self.assertEqual(self.icon._text, "5")
+        self.assertIsInstance(self.icon._text, str)
+
+    def test_set_text_with_string(self):
+        """Test set_text works with string input."""
+        self.icon.set_text("3")
+        self.assertEqual(self.icon._text, "3")
+
+    def test_do_snapshot_uses_graphene_rect(self):
+        """Test do_snapshot creates Graphene.Rect instead of crashing."""
+        from gi.repository import Graphene
+
+        mock_snapshot = Mock()
+        mock_cr = Mock()
+        mock_snapshot.append_cairo.return_value = mock_cr
+
+        with patch.object(self.icon, "get_width", return_value=48), \
+             patch.object(self.icon, "get_height", return_value=48), \
+             patch.object(self.icon, "get_style_context") as mock_ctx, \
+             patch.object(self.icon, "create_pango_layout") as mock_layout:
+            mock_color = Mock()
+            mock_color.red = 1.0
+            mock_color.green = 1.0
+            mock_color.blue = 1.0
+            mock_color.alpha = 1.0
+            mock_ctx.return_value.get_color.return_value = mock_color
+            mock_layout.return_value.get_pixel_size.return_value = (20, 14)
+
+            self.icon.set_text("5")
+            self.icon.do_snapshot(mock_snapshot)
+
+        mock_snapshot.append_cairo.assert_called_once()
+        arg = mock_snapshot.append_cairo.call_args[0][0]
+        self.assertIsInstance(arg, Graphene.Rect)
 
 
 if __name__ == "__main__":

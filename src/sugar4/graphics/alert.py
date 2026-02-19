@@ -55,6 +55,7 @@ STABLE.
 import gettext
 import math
 
+from gi.repository import Graphene
 from gi.repository import Gtk
 from gi.repository import GObject
 from gi.repository import GLib
@@ -314,11 +315,9 @@ class _TimeoutIcon(Gtk.Widget):
         height = self.get_height()
 
         # Create a cairo context from snapshot
-        cr = snapshot.append_cairo(
-            Gtk.graphene_rect_init_from_rect(
-                Gtk.graphene_rect_alloc(), 0, 0, width, height
-            )
-        )
+        rect = Graphene.Rect()
+        rect.init(0, 0, width, height)
+        cr = snapshot.append_cairo(rect)
 
         # Draw circle background
         x = width * 0.5
@@ -342,7 +341,7 @@ class _TimeoutIcon(Gtk.Widget):
             layout.show_in_cairo_context(cr)
 
     def set_text(self, text):
-        self._text = text
+        self._text = str(text)
         self.queue_draw()
 
 
