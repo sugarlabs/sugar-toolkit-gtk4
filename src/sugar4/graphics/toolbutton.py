@@ -159,34 +159,8 @@ class ToolButton(Gtk.Button):
         self.connect("destroy", self.__destroy_cb)
         self.connect("clicked", self.__clicked_cb)
 
-        self._apply_toolbar_button_css()
-
-    def _apply_toolbar_button_css(self):
-        css = """
-        .toolbar-button {
-            border-radius: 6px;
-            margin: 2px;
-            padding: 6px;
-            min-width: 32px;
-            min-height: 32px;
-        }
-
-        .toolbar-button:hover {
-            background: alpha(@theme_fg_color, 0.1);
-        }
-
-        .toolbar-button:active,
-        .toolbar-button.active {
-            background: alpha(@theme_fg_color, 0.2);
-            border: 1px solid alpha(@theme_fg_color, 0.3);
-        }
-
-        .toolbar-button:focus {
-            outline: 2px solid @theme_selected_bg_color;
-            outline-offset: 2px;
-        }
-        """
-
+        self.add_css_class("toolbutton")
+        
         try:
             css_provider = Gtk.CssProvider()
             css_provider.load_from_string(css)
