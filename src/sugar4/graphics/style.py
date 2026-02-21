@@ -283,6 +283,7 @@ def apply_css_to_widget(widget, css: str) -> None:
         return
 
     try:
+        from gi.repository import Gtk
         css_provider = Gtk.CssProvider()
         css_provider.load_from_string(css)
 
