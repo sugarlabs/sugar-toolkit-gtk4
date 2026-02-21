@@ -322,25 +322,18 @@ class DescriptionItem(ToolButton):
         if icon is None:
             # Default to theme icon name
             icon_name = "edit-description"
-            activity_dir = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), "../../../hello-world/activity")
-            )
-            file_name = os.path.join(activity_dir, "edit-description.svg")
+            file_name = None
         elif os.path.isabs(icon):
             icon_name = None
             file_name = icon
         elif icon.endswith(".svg"):
-            activity_dir = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), "../../../hello-world/activity")
-            )
-            file_name = os.path.join(activity_dir, icon)
+            from sugar4 import env
+            file_name = os.path.join(env.get_bundle_path(), icon)
             icon_name = None
         else:
             icon_name = icon
-            activity_dir = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), "../../../hello-world/activity")
-            )
-            file_name = os.path.join(activity_dir, icon)
+            file_name = None
+            
         icon_widget = Icon(icon_name=icon_name, file_name=file_name)
         icon_widget.set_pixel_size(48)
         self.set_icon_widget(icon_widget)
