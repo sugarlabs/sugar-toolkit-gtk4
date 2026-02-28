@@ -247,22 +247,7 @@ class ToolbarBox(Gtk.Box):
         self._apply_styling()
 
     def _apply_styling(self):
-        self.add_css_class("sugar-toolbarbox")
-
-        css = f"""
-        .sugar-toolbarbox {{
-            background: {style.COLOR_TOOLBAR_GREY.get_css_rgba()};
-        }}
-        .toolbar-expandable-button {{
-            margin: 2px;
-            border-radius: 4px;
-        }}
-        .toolbar-expandable-button.expanded {{
-            background: alpha(@theme_selected_bg_color, 0.2);
-            border-bottom: 2px solid @theme_selected_bg_color;
-        }}
-        """
-        style.apply_css_to_widget(self, css)
+        self.add_css_class("toolbar")
 
     def get_toolbar(self):
         return self._toolbar
