@@ -36,7 +36,7 @@ class TestToggleToolButton(unittest.TestCase):
         """Test basic toggle tool button creation."""
         self.assertIsInstance(self.button, ToggleToolButton)
         self.assertIsInstance(self.button, Gtk.ToggleButton)
-        self.assertIsNotNone(self.button._palette_invoker)
+        self.assertIsNotNone(self.button.get_palette_invoker())
 
     def test_toggletoolbutton_creation_with_icon(self):
         """Test toggle tool button creation with icon name."""
@@ -224,7 +224,7 @@ class TestToggleToolButtonAccelerator(unittest.TestCase):
     def test_setup_accelerator_function(self):
         """Test setup_accelerator function."""
         button = ToggleToolButton()
-        button._accelerator = "<Ctrl>T"
+        button.set_accelerator("<Ctrl>T")
         # Should work even without proper toplevel window
         self.assertTrue(True)  # If we get here, no exception was raised
 
@@ -235,7 +235,7 @@ class TestToggleToolButtonAccelerator(unittest.TestCase):
         window.sugar_accel_group = {}  # Mock accelerator group for GTK4
 
         button = ToggleToolButton()
-        button._accelerator = "<Ctrl>T"
+        button.set_accelerator("<Ctrl>T")
 
         # Add button to window
         window.set_child(button)
@@ -246,7 +246,7 @@ class TestToggleToolButtonAccelerator(unittest.TestCase):
     def test_accelerator_without_window(self):
         """Test accelerator setup without proper window."""
         button = ToggleToolButton()
-        button._accelerator = "<Ctrl>T"
+        button.set_accelerator("<Ctrl>T")
 
     def test_accelerator_parsing(self):
         """Test accelerator string parsing."""

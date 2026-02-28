@@ -269,6 +269,30 @@ class ObjectChooser(object):
 
         return self._response_code
 
+    def get_parent_xid(self):
+        """Get the parent window XID."""
+        return self._parent_xid
+
+    def get_what_filter(self):
+        """Get the what filter string."""
+        return self._what_filter
+
+    def get_filter_type(self):
+        """Get the filter type."""
+        return self._filter_type
+
+    def get_show_preview(self):
+        """Get the show preview flag."""
+        return self._show_preview
+
+    def get_response_code(self):
+        """Get the response code from the chooser."""
+        return self._response_code
+
+    def get_object_id(self):
+        """Get the selected object ID."""
+        return self._object_id
+
     def get_selected_object(self):
         """
         Gets the object selected using the object chooser.

@@ -92,7 +92,7 @@ class MockDatastore:
     @staticmethod
     def copy(jobject, mount_point):
         new_jobject = MockJobject()
-        new_jobject.metadata.update(dict(jobject.metadata._properties))
+        new_jobject.metadata.update(jobject.metadata.get_dictionary())
         return new_jobject
 
     @staticmethod
@@ -254,11 +254,11 @@ class TestActivity(unittest.TestCase):
         activity = Activity(self.handle)
 
         activity.busy()
-        self.assertEqual(activity._busy_count, 1)
+        self.assertEqual(activity.get_busy_count(), 1)
 
         # Test nested busy
         activity.busy()
-        self.assertEqual(activity._busy_count, 2)
+        self.assertEqual(activity.get_busy_count(), 2)
 
         # Test unbusy
         remaining = activity.unbusy()
@@ -274,7 +274,7 @@ class TestActivity(unittest.TestCase):
         button = Gtk.Button()
         activity.add_stop_button(button)
 
-        self.assertIn(button, activity._stop_buttons)
+        self.assertIn(button, activity.get_stop_buttons())
 
     def test_copy_functionality(self):
         """Test activity copy functionality."""
@@ -320,7 +320,7 @@ class TestActivity(unittest.TestCase):
         activity.invite("account_path", "contact_id")
 
         # Should add to invites queue and call share
-        self.assertEqual(len(activity._invites_queue), 1)
+        self.assertEqual(len(activity.get_invites_queue()), 1)
         activity.share.assert_called_once_with(True)
 
     def test_notification_functionality(self):
@@ -429,8 +429,8 @@ class TestActivity(unittest.TestCase):
         activity = Activity(self.handle)
 
         # Activity should be registered with session
-        session = activity._session
-        self.assertIn(activity, session._activities)
+        session = activity.get_session()
+        self.assertIn(activity, session.get_activities())
 
     def test_resumed_activity(self):
         """Test resuming an activity from journal object."""
@@ -439,8 +439,8 @@ class TestActivity(unittest.TestCase):
         activity = Activity(self.handle)
 
         # Should be marked as resumed
-        self.assertTrue(activity._is_resumed)
-        self.assertIsNotNone(activity._jobject)
+        self.assertTrue(activity.is_resumed())
+        self.assertIsNotNone(activity.get_jobject())
 
 
 class TestActivityWithoutGTK(unittest.TestCase):
@@ -475,15 +475,15 @@ class TestActivitySession(unittest.TestCase):
 
     def test_session_creation(self):
         """Test session creation."""
-        self.assertEqual(len(self.session._activities), 0)
-        self.assertEqual(len(self.session._will_quit), 0)
+        self.assertEqual(len(self.session.get_activities()), 0)
+        self.assertEqual(len(self.session.get_will_quit()), 0)
 
     def test_activity_registration(self):
         """Test activity registration."""
         mock_activity = Mock()
 
         self.session.register(mock_activity)
-        self.assertIn(mock_activity, self.session._activities)
+        self.assertIn(mock_activity, self.session.get_activities())
 
     def test_activity_unregistration(self):
         """Test activity unregistration."""
@@ -491,7 +491,7 @@ class TestActivitySession(unittest.TestCase):
 
         self.session.register(mock_activity)
         self.session.unregister(mock_activity)
-        self.assertNotIn(mock_activity, self.session._activities)
+        self.assertNotIn(mock_activity, self.session.get_activities())
 
     def test_quit_handling(self):
         """Test quit request handling."""
@@ -503,10 +503,10 @@ class TestActivitySession(unittest.TestCase):
 
         # First activity wants to quit
         self.session.will_quit(mock_activity1, True)
-        self.assertIn(mock_activity1, self.session._will_quit)
+        self.assertIn(mock_activity1, self.session.get_will_quit())
 
         # Second activity doesn't want to quit yet
-        self.assertNotIn(mock_activity2, self.session._will_quit)
+        self.assertNotIn(mock_activity2, self.session.get_will_quit())
 
 
 if __name__ == "__main__":
