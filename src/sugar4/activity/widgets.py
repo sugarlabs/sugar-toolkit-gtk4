@@ -327,8 +327,8 @@ class DescriptionItem(ToolButton):
             icon_name = None
             file_name = icon
         elif icon.endswith(".svg"):
-            from sugar4 import env
-            file_name = os.path.join(env.get_bundle_path(), icon)
+            from sugar4.activity.activity import get_bundle_path
+            file_name = os.path.join(get_bundle_path(), icon)
             icon_name = None
         else:
             icon_name = icon
