@@ -1040,12 +1040,9 @@ class Activity(Window):
                 self._jobject.file_path = file_path
 
         # Check if we have a real datastore object or a mock
-        if hasattr(self._jobject, "object_id") and self._jobject.object_id is not None:
-            # Real journal object - try to write to datastore
+        if isinstance(self._jobject, datastore.DSObject):
             try:
-                if self._jobject.object_id is None:
-                    datastore.write(self._jobject, transfer_ownership=True)
-                else:
+                if self._jobject.object_id:
                     self._updating_jobject = True
                     datastore.write(
                         self._jobject,
@@ -1053,6 +1050,8 @@ class Activity(Window):
                         reply_handler=self.__save_cb,
                         error_handler=self.__save_error_cb,
                     )
+                else:
+                    datastore.write(self._jobject, transfer_ownership=True)
             except Exception as e:
                 logging.warning("Failed to save to datastore: %s", e)
                 logging.info(
