@@ -229,6 +229,15 @@ class DSObject(object):
     def copy(self):
         return DSObject(None, self._metadata.copy(), self._file_path)
 
+    def is_destroyed(self):
+        """Check if the object has been destroyed."""
+        return self._destroyed
+
+    def set_owns_file(self, owns):
+        """Set whether this object owns its file path."""
+        self._owns_file = owns
+
+
 
 class RawObject(object):
     """A representation for objects not in the DS but
