@@ -56,6 +56,7 @@ from gi.repository import GLib, GObject, Gtk, Gdk, GdkPixbuf, Rsvg
 import cairo
 
 from sugar4.graphics.xocolor import XoColor
+from sugar4.graphics import style
 
 
 # Simple LRU cache implementation
@@ -87,12 +88,6 @@ class _LRU:
 
 
 _BADGE_SIZE = 0.45
-_DEFAULT_ICON_SIZE = 48
-
-# Icon size constants
-SMALL_ICON_SIZE = 16
-STANDARD_ICON_SIZE = 48
-LARGE_ICON_SIZE = 96
 
 
 class _SVGLoader:
@@ -165,8 +160,8 @@ class _IconBuffer:
         self.stroke_color: Optional[str] = None
         self.background_color: Optional[Gdk.RGBA] = None
         self.badge_name: Optional[str] = None
-        self.width: int = _DEFAULT_ICON_SIZE
-        self.height: int = _DEFAULT_ICON_SIZE
+        self.width: int = style.STANDARD_ICON_SIZE
+        self.height: int = style.STANDARD_ICON_SIZE
         self.cache: bool = True
         self.scale: float = 1.0
         self.pixbuf: Optional[GdkPixbuf.Pixbuf] = None
@@ -554,25 +549,42 @@ class _IconBuffer:
     xo_color = property(_get_xo_color, _set_xo_color)
 
 
-class Icon(Gtk.Widget):
-    """
-    Basic Sugar icon widget.
+class Icon(Gtk.Image):
+    '''
+     The most basic Sugar icon class.  Displays the icon given.
 
-    Displays themed icons with Sugar's color customization features.
-    Uses modern snapshot-based rendering for improved performance.
+     You must set either the `file_name`, `file` or `icon_name` properties,
+     otherwise, no icon will be visible.
 
-    Properties:
-        icon_name (str): Icon name from theme
-        file_name (str): Path to icon file
-        pixel_size (int): Size in pixels
-        fill_color (str): Fill color as hex string
-        stroke_color (str): Stroke color as hex string
-        xo_color (XoColor): Sugar color pair
-        badge_name (str): Badge icon name
-        alpha (float): Icon transparency (0.0-1.0)
-        scale (float): Icon scale factor
-        sensitive (bool): Whether icon appears sensitive
-    """
+     You should set the `pixel_size`, using constants the `*_ICON_SIZE`
+     constants from :any:`sugar4.graphics.style`.
+
+     You should set the color (either via `xo_color` or `fill_color` and
+     `stroke_color`), otherwise the default black and white fill and stroke
+     will be used.
+
+     Keyword Args:
+         icon_name (str): Icon name from theme
+         file_name (str): a path to the SVG icon file
+         file (object): same behaviour as file_name, but for
+             :class:`sugar3.util.TempFilePath` type objects
+         icon_name (str): a name of an icon in the theme to display.  The
+             icons in the theme include those in the sugar-artwork project
+             and icons in the activity's '/icons' directory
+         pixel_size (int): size of the icon, in pixels.  Best to use the
+             constants from :class:`sugar3.graphics.style`, as those constants
+             are scaled based on the user's preferences
+         xo_color (sugar3.graphics.xocolor.XoColor): color to display icon,
+             a shortcut that just sets the fill_color and stroke_color
+         fill_color (str): a string, like '#FFFFFF', that will serve as the
+             fill color for the icon
+         stroke_color (str): a string, like '#282828', that will serve as the
+             stroke color for the icon
+         badge_name (str): the icon_name for a badge icon,
+             see :any:`set_badge_name`
+         alpha (float): transparency of the icon, defaults to 1.0
+         sensitive (bool): Whether icon appears sensitive
+     '''
 
     __gtype_name__ = "SugarIcon"
 
@@ -580,7 +592,7 @@ class Icon(Gtk.Widget):
         self,
         icon_name: Optional[str] = None,
         file_name: Optional[str] = None,
-        pixel_size: int = STANDARD_ICON_SIZE,
+        pixel_size: int = style.STANDARD_ICON_SIZE,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -657,6 +669,13 @@ class Icon(Gtk.Widget):
             self.queue_resize()
 
     def get_fill_color(self) -> Optional[str]:
+        '''
+        Get the color used to fill the icon
+
+        Returns:
+            str, SVG color string, like '#FFFFFF'
+        '''
+
         return self._buffer.fill_color
 
     def set_fill_color(self, color: Optional[str]):
@@ -676,6 +695,12 @@ class Icon(Gtk.Widget):
         return self._buffer._get_xo_color()
 
     def set_xo_color(self, xo_color: Optional[XoColor]):
+        '''
+        Set the colors used to display the icon
+
+        Args:
+            value (sugar3.graphics.xocolor.XoColor): new XoColor to use
+        '''
         if not hasattr(self, "_buffer") or self._buffer is None:
             self._buffer = _IconBuffer()
         if self._buffer._get_xo_color() != xo_color:
@@ -719,7 +744,7 @@ class Icon(Gtk.Widget):
     )
     pixel_size = GObject.Property(
         type=int,
-        default=STANDARD_ICON_SIZE,
+        default=style.STANDARD_ICON_SIZE,
         getter=get_pixel_size,
         setter=set_pixel_size,
     )
@@ -751,26 +776,6 @@ class Icon(Gtk.Widget):
         if self._buffer.pixbuf != pixbuf:
             self._buffer.pixbuf = pixbuf
             self.queue_draw()
-
-    def get_gtk_image(self) -> Gtk.Image:
-        """
-        Create a Gtk.Image from this icon for compatibility.
-
-        Returns:
-            Gtk.Image: Image widget with icon content
-        """
-        surface = self._buffer.get_surface(self.get_sensitive())
-        if surface:
-            # Convert surface to pixbuf then to texture
-            pixbuf = Gdk.pixbuf_get_from_surface(
-                surface, 0, 0, surface.get_width(), surface.get_height()
-            )
-            if pixbuf:
-                texture = Gdk.Texture.new_for_pixbuf(pixbuf)
-                image = Gtk.Image.new_from_paintable(texture)
-                return image
-
-        return Gtk.Image.new_from_icon_name("image-missing")
 
 
 class EventIcon(Icon):
@@ -1001,7 +1006,7 @@ def get_icon_file_name(icon_name: str) -> Optional[str]:
     icon_paintable = icon_theme.lookup_icon(
         icon_name,
         None,
-        STANDARD_ICON_SIZE,
+        style.STANDARD_ICON_SIZE,
         1,
         Gtk.TextDirection.NONE,
         Gtk.IconLookupFlags.NONE,
@@ -1044,7 +1049,7 @@ def get_surface(
     file_name: Optional[str] = None,
     fill_color: Optional[str] = None,
     stroke_color: Optional[str] = None,
-    pixel_size: int = STANDARD_ICON_SIZE,
+    pixel_size: int = style.STANDARD_ICON_SIZE,
     **kwargs,
 ) -> Optional[cairo.ImageSurface]:
     """
