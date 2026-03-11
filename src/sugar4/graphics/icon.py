@@ -1004,7 +1004,7 @@ def get_icon_file_name(icon_name: str) -> Optional[str]:
         STANDARD_ICON_SIZE,
         1,
         Gtk.TextDirection.NONE,
-        Gtk.IconLookupFlags(0), 
+        Gtk.IconLookupFlags(0),
     )
 
     if icon_paintable:
