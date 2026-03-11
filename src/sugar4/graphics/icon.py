@@ -249,7 +249,7 @@ class _IconBuffer:
                 self.width,
                 1,
                 Gtk.TextDirection.NONE,
-                Gtk.IconLookupFlags.NONE,
+                Gtk.IconLookupFlags(0), 
             )
 
             if icon_paintable:
@@ -300,7 +300,7 @@ class _IconBuffer:
             size,
             1,
             Gtk.TextDirection.NONE,
-            Gtk.IconLookupFlags.NONE,
+            Gtk.IconLookupFlags(0),
         )
 
         if not badge_paintable:
@@ -1004,7 +1004,7 @@ def get_icon_file_name(icon_name: str) -> Optional[str]:
         STANDARD_ICON_SIZE,
         1,
         Gtk.TextDirection.NONE,
-        Gtk.IconLookupFlags.NONE,
+        Gtk.IconLookupFlags(0), 
     )
 
     if icon_paintable:
