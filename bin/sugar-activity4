@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
 
-from sugar3.activity import activityinstance
+from sugar4.activity import activityinstance
 
 activityinstance.main()
