@@ -319,10 +319,10 @@ class DescriptionItem(ToolButton):
 
         # Accept either icon name or file path
         # TODO: Improve icon handling
+        file_name = None
         if icon is None:
             # Default to theme icon name
             icon_name = "edit-description"
-            file_name = None
         elif os.path.isabs(icon):
             icon_name = None
             file_name = icon
@@ -332,7 +332,6 @@ class DescriptionItem(ToolButton):
             icon_name = None
         else:
             icon_name = icon
-            file_name = None
             
         icon_widget = Icon(icon_name=icon_name, file_name=file_name)
         icon_widget.set_pixel_size(48)
