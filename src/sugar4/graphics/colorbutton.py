@@ -21,7 +21,7 @@ import gettext
 import logging
 import struct
 
-from gi.repository import Gdk, GObject, Gtk
+from gi.repository import Gdk, Gio, GObject, Gtk
 
 from sugar4.graphics import style
 from sugar4.graphics.icon import Icon
@@ -419,18 +419,39 @@ class _ColorPalette(Palette):
 
 
 def _add_accelerator(tool_button):
-    """GTK4: Accelerators are now handled at the application level."""
-    # In GTK4, accelerators are set via Gtk.Application.set_accels_for_action()
-    pass
+    """Add accelerator when widget is properly added to app window."""
+    if not hasattr(tool_button, '_accelerator') or not tool_button._accelerator:
+        return
 
+    root = tool_button.get_root()
+    if not root:
+        return
 
-def _hierarchy_changed_cb(tool_button, previous_toplevel):
-    _add_accelerator(tool_button)
+    app = getattr(root, 'get_application', lambda: None)()
+    if not app:
+        return
+
+    # Remove previous action if exists
+    if hasattr(tool_button, '_accel_action_name'):
+        try:
+            app.remove_action(tool_button._accel_action_name)
+        except Exception:
+            pass
+
+    action_name = f"color-tool-{id(tool_button)}"
+    action = Gio.SimpleAction.new(action_name, None)
+    action.connect("activate", lambda a, p: tool_button.emit("clicked"))
+    app.add_action(action)
+    app.set_accels_for_action(f"app.{action_name}",
+                              [tool_button._accelerator])
+
+    tool_button._accel_action = action
+    tool_button._accel_action_name = action_name
 
 
 def setup_accelerator(tool_button):
     _add_accelerator(tool_button)
-    tool_button.connect("hierarchy-changed", _hierarchy_changed_cb)
+    tool_button.connect("notify::root", lambda *a: _add_accelerator(tool_button))
 
 
 class ColorToolButton(Gtk.Box):
