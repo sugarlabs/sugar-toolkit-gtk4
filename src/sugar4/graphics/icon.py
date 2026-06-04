@@ -583,9 +583,9 @@ class Icon(Gtk.Widget):
         pixel_size: int = STANDARD_ICON_SIZE,
         **kwargs,
     ):
-        super().__init__(**kwargs)
-
         self._buffer = _IconBuffer()
+
+        super().__init__(**kwargs)
         self._buffer.icon_name = icon_name
         self._buffer.file_name = file_name
         self._buffer.width = pixel_size
