@@ -73,7 +73,7 @@ class IconEntry(Gtk.Entry):
         self._clear_button_added = False
         self._loader = _SVGLoader()
 
-        key_controller = Gtk.EventControllerKey()
+        key_controller = Gtk.EventControllerKey.new()
         key_controller.connect("key-pressed", self._keypress_event_cb)
         self.add_controller(key_controller)
 

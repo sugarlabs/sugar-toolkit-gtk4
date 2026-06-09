@@ -273,10 +273,10 @@ def zoom(units: float) -> int:
 
 def apply_css_to_widget(widget, css: str) -> None:
     """
-    Apply CSS styling to a widget.
+    Apply CSS styling globally (GTK4 doesn't support per-widget CSS providers).
 
     Args:
-        widget: Widget to style
+        widget: Widget to style (ignored in GTK4, CSS is global)
         css (str): CSS string to apply
     """
     if not GTK_AVAILABLE:
@@ -286,8 +286,11 @@ def apply_css_to_widget(widget, css: str) -> None:
         css_provider = Gtk.CssProvider()
         css_provider.load_from_string(css)
 
-        context = widget.get_style_context()
-        context.add_provider(css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        Gtk.StyleContext.add_provider_for_display(
+            Gdk.Display.get_default(),
+            css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
     except Exception as e:
         logging.warning(f"Failed to apply CSS: {e}")
 

@@ -186,7 +186,11 @@ class ToolbarButton(ToolButton):
 
     def do_snapshot(self, snapshot):
         """GTK4 drawing implementation with arrow indicator."""
-        Gtk.Widget.do_snapshot(self, snapshot)
+        # Snapshot child
+        child = self.get_first_child()
+        while child is not None:
+            self.snapshot_child(child, snapshot)
+            child = child.get_next_sibling()
 
         width = self.get_width()
         height = self.get_height()
@@ -436,7 +440,11 @@ class _Box(Gtk.Box):
 
     def do_snapshot(self, snapshot):
         """Render palette using snapshot drawing."""
-        Gtk.Widget.do_snapshot(self, snapshot)
+        # Snapshot child
+        child = self.get_first_child()
+        while child is not None:
+            self.snapshot_child(child, snapshot)
+            child = child.get_next_sibling()
 
         button_alloc = self._toolbar_button.get_allocation()
         my_width = self.get_width()

@@ -213,9 +213,11 @@ class ToggleToolButton(Gtk.ToggleButton):
         """
         Render the toggle tool button using snapshot-based drawing.
         """
-        # Use snapshot-based rendering instead of legacy draw methods
-        # For now, just call the parent implementation
-        Gtk.ToggleButton.do_snapshot(self, snapshot)
+        # Snapshot child
+        child = self.get_first_child()
+        while child is not None:
+            self.snapshot_child(child, snapshot)
+            child = child.get_next_sibling()
 
         # Custom drawing can be implemented here using the snapshot API
         # if self.palette and self.palette.is_up():

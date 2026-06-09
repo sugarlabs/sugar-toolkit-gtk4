@@ -296,8 +296,8 @@ class PaletteMenuItem(Gtk.Button):
         # gesture controllers for hover effects
         self._setup_gestures()
 
-        # Connect to activate signal
-        self.connect("activate", self._clicked_cb)
+        # Connect to clicked signal so that clicks emit 'activate' for compatibility
+        self.connect("clicked", self._clicked_cb)
 
     def _on_activate(self, button):
         """Handle button activation - emits our custom signal."""

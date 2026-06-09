@@ -419,8 +419,22 @@ class ToolButton(Gtk.Button):
 
     def do_snapshot(self, snapshot):
         """Render tool button using snapshot-based drawing."""
-        # Call parent implementation first
-        Gtk.Widget.do_snapshot(self, snapshot)
+        # Draw focus rectangle
+        if self.has_focus():
+            width = self.get_width()
+            height = self.get_height()
+            rect = Graphene.Rect()
+            rect.init(0, 0, width, height)
+
+            color = Gdk.RGBA()
+            color.parse(style.COLOR_BUTTON_GREY.get_svg())
+            snapshot.append_color(color, rect)
+
+        # Snapshot child
+        child = self.get_first_child()
+        while child is not None:
+            self.snapshot_child(child, snapshot)
+            child = child.get_next_sibling()
 
         palette = self.get_palette()
         if palette and palette.is_up():

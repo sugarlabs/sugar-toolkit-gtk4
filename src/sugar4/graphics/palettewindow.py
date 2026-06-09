@@ -340,7 +340,7 @@ class _PaletteWindowWidget(Gtk.Window):
 
     def do_size_allocate(self, width, height, baseline):
         """Allocate size to the palette window and its children."""
-        Gtk.Window.do_size_allocate(self, width, height, baseline)
+        super().do_size_allocate(width, height, baseline)
 
         allocation = Gdk.Rectangle()
         allocation.x = 0
@@ -535,7 +535,7 @@ class PaletteWindow(GObject.GObject):
                 self._widget.disconnect_by_func(self.__leave_notify_cb)
 
             if self._widget is not None and hasattr(self, "_key_controller"):
-                self._widget.remove_controller(self._key_controller)
+                GLib.idle_add(self._widget.remove_controller, self._key_controller)
         except (TypeError, AttributeError):
             pass  # Already disconnected
 
@@ -1268,11 +1268,11 @@ class WidgetInvoker(Invoker):
         if self._widget:
             try:
                 if self._motion_controller:
-                    self._widget.remove_controller(self._motion_controller)
+                    GLib.idle_add(self._widget.remove_controller, self._motion_controller)
                 if self._click_controller:
-                    self._widget.remove_controller(self._click_controller)
+                    GLib.idle_add(self._widget.remove_controller, self._click_controller)
                 if self._long_press_gesture:
-                    self._widget.remove_controller(self._long_press_gesture)
+                    GLib.idle_add(self._widget.remove_controller, self._long_press_gesture)
             except Exception:
                 pass
 
@@ -1447,11 +1447,11 @@ class CursorInvoker(Invoker):
         if self.parent:
             try:
                 if self._motion_controller:
-                    self.parent.remove_controller(self._motion_controller)
+                    GLib.idle_add(self.parent.remove_controller, self._motion_controller)
                 if self._click_controller:
-                    self.parent.remove_controller(self._click_controller)
+                    GLib.idle_add(self.parent.remove_controller, self._click_controller)
                 if self._long_press_gesture:
-                    self.parent.remove_controller(self._long_press_gesture)
+                    GLib.idle_add(self.parent.remove_controller, self._long_press_gesture)
             except Exception:
                 pass
 
@@ -1606,11 +1606,11 @@ class TreeViewInvoker(Invoker):
         if self._tree_view:
             try:
                 if self._motion_controller:
-                    self._tree_view.remove_controller(self._motion_controller)
+                    GLib.idle_add(self._tree_view.remove_controller, self._motion_controller)
                 if self._click_controller:
-                    self._tree_view.remove_controller(self._click_controller)
+                    GLib.idle_add(self._tree_view.remove_controller, self._click_controller)
                 if self._long_press_gesture:
-                    self._tree_view.remove_controller(self._long_press_gesture)
+                    GLib.idle_add(self._tree_view.remove_controller, self._long_press_gesture)
             except Exception:
                 pass
 
