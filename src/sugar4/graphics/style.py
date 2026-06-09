@@ -295,6 +295,40 @@ def apply_css_to_widget(widget, css: str) -> None:
         logging.warning(f"Failed to apply CSS: {e}")
 
 
+_BASE_CSS = """
+window, box, grid {
+    padding: 0px;
+}
+button {
+    padding: 4px;
+    margin: 0px;
+    min-height: 24px;
+    min-width: 24px;
+}
+toolbar {
+    padding: 0px;
+}
+toolbar button {
+    padding: 2px;
+}
+"""
+
+def _init_global_css():
+    if not GTK_AVAILABLE:
+        return
+    try:
+        css_provider = Gtk.CssProvider()
+        css_provider.load_from_string(_BASE_CSS)
+        Gtk.StyleContext.add_provider_for_display(
+            Gdk.Display.get_default(),
+            css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+    except Exception as e:
+        logging.warning(f"Failed to apply base CSS: {e}")
+
+_init_global_css()
+
 ZOOM_FACTOR = _compute_zoom_factor()  #: Scale factor, as float (eg. 0.72, 1.0)
 
 DEFAULT_SPACING = zoom(15)  #: Spacing is placed in-between elements

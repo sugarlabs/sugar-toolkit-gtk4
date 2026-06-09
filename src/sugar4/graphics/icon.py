@@ -1113,11 +1113,19 @@ class CellRendererIcon(Gtk.CellRenderer):
             finally:
                 snapshot.restore()
 
-    def do_get_size(self, widget, cell_area):
-        # Return (x_offset, y_offset, width, height)
-        # We can just return the size requested
+    def do_get_preferred_width(self, widget):
         size = self._buffer.width
-        return (0, 0, size, size)
+        return size, size
+
+    def do_get_preferred_height(self, widget):
+        size = self._buffer.width
+        return size, size
+
+    def do_get_preferred_width_for_height(self, widget, height):
+        return self.do_get_preferred_width(widget)
+
+    def do_get_preferred_height_for_width(self, widget, width):
+        return self.do_get_preferred_height(widget)
 
     def do_activate(self, event, widget, path, background_area, cell_area, flags):
         self.emit('clicked', path)
