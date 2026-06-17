@@ -108,6 +108,9 @@ class _PaletteMenuWidget(Gtk.Popover):
 
     def __init__(self):
         super().__init__()
+        
+        self.add_css_class("palette")
+        self.add_css_class("palette-popover")
 
         # container for menu items
         self._menu_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -177,8 +180,51 @@ class _PaletteMenuWidget(Gtk.Popover):
             return
 
         self._invoker = invoker or self._invoker
-        if self._invoker and hasattr(self._invoker, "_widget"):
-            self.set_parent(self._invoker._widget)
+        if self._invoker:
+            parent_widget = None
+            if hasattr(self._invoker, "get_widget"):
+                parent_widget = self._invoker.get_widget()
+            elif hasattr(self._invoker, "parent") and self._invoker.parent is not None:
+                parent_widget = self._invoker.parent
+            elif isinstance(self._invoker, Gtk.Widget):
+                parent_widget = self._invoker
+            elif hasattr(self._invoker, "_tool") and self._invoker._tool is not None:
+                parent_widget = self._invoker._tool
+            elif hasattr(self._invoker, "_widget") and self._invoker._widget is not None:
+                parent_widget = self._invoker._widget
+            elif hasattr(self._invoker, "_tree_view") and self._invoker._tree_view is not None:
+                parent_widget = self._invoker._tree_view
+
+            if parent_widget is not None:
+                if not self.get_parent():
+                    try:
+                        self.set_parent(parent_widget)
+                        if not getattr(self, '_unparent_handler_id', None):
+                            self._unparent_handler_id = parent_widget.connect('destroy', lambda w: self.unparent() if self.get_parent() == w else None)
+                    except Exception as e:
+                        logging.warning(f"set_parent failed: {e}")
+                    if not self.get_parent():
+                        # Fallback for custom widgets that don't accept children
+                        p = parent_widget.get_parent()
+                        while p is not None:
+                            try:
+                                self.set_parent(p)
+                                if not getattr(self, '_unparent_handler_id', None):
+                                    self._unparent_handler_id = p.connect('destroy', lambda w: self.unparent() if self.get_parent() == w else None)
+                            except Exception:
+                                pass
+                            if self.get_parent():
+                                break
+                            p = p.get_parent()
+
+        if not self.get_parent():
+            logging.warning("Palette popup failed: No parent widget.")
+            return
+
+        native = self.get_parent().get_native()
+        if not native or not native.get_surface():
+            logging.warning("Palette popup failed: Parent is not in a toplevel window.")
+            return
 
         self._entered = False
         self._mouse_in_palette = False
@@ -280,8 +326,8 @@ class _PaletteMenuWidget(Gtk.Popover):
                 self.emit("enter-notify")
 
 
-class _PaletteWindowWidget(Gtk.Window):
-    """Palette window widget with modern event handling."""
+class _PaletteWindowWidget(Gtk.Popover):
+    """Palette window widget with modern event handling, inheriting from Popover."""
 
     __gtype_name__ = "SugarPaletteWindowWidget"
 
@@ -294,21 +340,44 @@ class _PaletteWindowWidget(Gtk.Window):
         super().__init__()
 
         self._palette = palette
-        self.set_decorated(False)
-        self.set_resizable(False)
 
         # Apply palette styling
         self.add_css_class("palette")
+        self.add_css_class("palette-popover")
 
         self._old_alloc = None
         self._invoker = None
         self._should_accept_focus = True
+        
+        self._entered = False
+        self._mouse_in_palette = False
+        self._mouse_in_invoker = False
+        self._up = False
 
         # Set up event controllers for GTK4
         self._motion_controller = Gtk.EventControllerMotion()
         self._motion_controller.connect("enter", self._enter_notify_cb)
         self._motion_controller.connect("leave", self._leave_notify_cb)
         self.add_controller(self._motion_controller)
+
+    def get_rect(self):
+        """Get the bounding box of the palette."""
+        rect = Gdk.Rectangle()
+        rect.width = self.get_width()
+        rect.height = self.get_height()
+        try:
+            # Attempt to get coordinates relative to the parent widget
+            parent = self.get_parent()
+            if parent:
+                native = parent.get_native()
+                if native:
+                    success, transform = self.compute_transform(native)
+                    if success and transform:
+                        rect.x = int(transform.get_value(0, 3))
+                        rect.y = int(transform.get_value(1, 3))
+        except Exception:
+            pass
+        return rect
 
     def set_accept_focus(self, focus):
         """Set whether the window accepts focus."""
@@ -319,10 +388,13 @@ class _PaletteWindowWidget(Gtk.Window):
         """Get the origin position of the window."""
         # GTK4: Window position is managed by compositor
         return (0, 0)
+        
+    def move(self, x, y):
+        pass
 
     def do_measure(self, orientation, for_size):
         """Calculate size requirements for the palette window."""
-        min_size, nat_size, min_baseline, nat_baseline = Gtk.Window.do_measure(
+        min_size, nat_size, min_baseline, nat_baseline = Gtk.Popover.do_measure(
             self, orientation, for_size
         )
 
@@ -338,27 +410,6 @@ class _PaletteWindowWidget(Gtk.Window):
 
         return min_size, nat_size, min_baseline, nat_baseline
 
-    def do_size_allocate(self, width, height, baseline):
-        """Allocate size to the palette window and its children."""
-        super().do_size_allocate(width, height, baseline)
-
-        allocation = Gdk.Rectangle()
-        allocation.x = 0
-        allocation.y = 0
-        allocation.width = width
-        allocation.height = height
-
-        if (
-            self._old_alloc is None
-            or self._old_alloc.x != allocation.x
-            or self._old_alloc.y != allocation.y
-            or self._old_alloc.width != allocation.width
-            or self._old_alloc.height != allocation.height
-        ):
-            self.queue_draw()
-
-        self._old_alloc = allocation
-
     def set_invoker(self, invoker):
         self._invoker = invoker
 
@@ -373,32 +424,84 @@ class _PaletteWindowWidget(Gtk.Window):
 
     def set_content(self, widget):
         """Set the main content widget for the palette window."""
-        # Ensure _widget exists and is a Gtk.Window
-        if not hasattr(self, "_widget") or self._widget is None:
-            self._widget = Gtk.Window()
-        self._widget.set_child(widget)
+        self.set_child(widget)
 
     def _enter_notify_cb(self, controller, x, y):
         """Handle enter notify events."""
+        self._mouse_in_palette = True
         self.emit("enter-notify")
 
     def _leave_notify_cb(self, controller):
         """Handle leave notify events."""
+        self._mouse_in_palette = False
         self.emit("leave-notify")
 
     def popup(self, invoker=None):
         """Show the window."""
-        if self.get_visible():
+        if self._up:
             return
-        print("PaletteWindow.popup called")
-        self.present()
+
+        self._invoker = invoker or self._invoker
+        if self._invoker:
+            parent_widget = None
+            if hasattr(self._invoker, "get_widget"):
+                parent_widget = self._invoker.get_widget()
+            elif hasattr(self._invoker, "parent") and self._invoker.parent is not None:
+                parent_widget = self._invoker.parent
+            elif isinstance(self._invoker, Gtk.Widget):
+                parent_widget = self._invoker
+            elif hasattr(self._invoker, "_tool") and self._invoker._tool is not None:
+                parent_widget = self._invoker._tool
+            elif hasattr(self._invoker, "_widget") and self._invoker._widget is not None:
+                parent_widget = self._invoker._widget
+            elif hasattr(self._invoker, "_tree_view") and self._invoker._tree_view is not None:
+                parent_widget = self._invoker._tree_view
+
+            if parent_widget is not None:
+                if not self.get_parent():
+                    try:
+                        self.set_parent(parent_widget)
+                        if not getattr(self, '_unparent_handler_id', None):
+                            self._unparent_handler_id = parent_widget.connect('destroy', lambda w: self.unparent() if self.get_parent() == w else None)
+                    except Exception as e:
+                        logging.warning(f"set_parent failed: {e}")
+                    if not self.get_parent():
+                        # Fallback for custom widgets that don't accept children
+                        p = parent_widget.get_parent()
+                        while p is not None:
+                            try:
+                                self.set_parent(p)
+                                if not getattr(self, '_unparent_handler_id', None):
+                                    self._unparent_handler_id = p.connect('destroy', lambda w: self.unparent() if self.get_parent() == w else None)
+                            except Exception:
+                                pass
+                            if self.get_parent():
+                                break
+                            p = p.get_parent()
+
+        if not self.get_parent():
+            logging.warning("Palette popup failed: No parent widget.")
+            return
+
+        native = self.get_parent().get_native()
+        if not native or not native.get_surface():
+            logging.warning("Palette popup failed: Parent is not in a toplevel window.")
+            return
+
+        self._entered = False
+        self._mouse_in_palette = False
+        self._mouse_in_invoker = False
+
+        super().popup()
+        self._up = True
 
     def popdown(self):
         """Hide the window."""
-        if not self.get_visible():
+        if not self._up:
             return
-        print("PaletteWindow.popdown called")
-        self.set_visible(False)
+            
+        super().popdown()
+        self._up = False
 
 
 class MouseSpeedDetector(GObject.GObject):
@@ -543,7 +646,10 @@ class PaletteWindow(GObject.GObject):
 
     def destroy(self):
         if self._widget is not None:
-            self._widget.destroy()
+            if hasattr(self._widget, "destroy"):
+                self._widget.destroy()
+            elif hasattr(self._widget, "unparent"):
+                self._widget.unparent()
 
     def __destroy_cb(self, palette):
         """Handle widget destruction."""
@@ -617,6 +723,8 @@ class PaletteWindow(GObject.GObject):
         self.popup(immediate=immediate)
 
     def is_up(self):
+        if self._widget is not None and hasattr(self._widget, "get_visible"):
+            return self._widget.get_visible()
         return self._up
 
     def _set_effective_group_id(self, group_id):
@@ -1113,9 +1221,7 @@ class Invoker(GObject.GObject):
         self.emit("right-click")
 
     def notify_toggle_state(self):
-        print("ToolInvoker.notify_toggle_state called")
         self._ensure_palette_exists()
-        print("ToolInvoker emitting 'toggle-state' signal")
         self.emit("toggle-state")
 
     def _process_event(self, x, y):
@@ -1666,7 +1772,8 @@ class TreeViewInvoker(Invoker):
         if not self._tree_view:
             return
 
-        here = self._tree_view.get_path_at_pos(int(x), int(y))
+        tx, ty = self._tree_view.convert_widget_to_tree_coords(int(x), int(y))
+        here = self._tree_view.get_path_at_pos(tx, ty)
         if here is None:
             if self._path is not None:
                 self.notify_mouse_leave()
@@ -1701,7 +1808,8 @@ class TreeViewInvoker(Invoker):
 
     def __button_release_event_cb(self, gesture, n_press, x, y):
         x, y = int(x), int(y)
-        here = self._tree_view.get_path_at_pos(x, y)  # type: ignore
+        tx, ty = self._tree_view.convert_widget_to_tree_coords(x, y)
+        here = self._tree_view.get_path_at_pos(tx, ty)  # type: ignore
         if here is None:
             return False
 
@@ -1735,10 +1843,9 @@ class TreeViewInvoker(Invoker):
         return False
 
     def __long_pressed_event_cb(self, gesture, x, y):
-        if not self._tree_view:
-            return
-
-        here = self._tree_view.get_path_at_pos(x, y)
+        x, y = int(x), int(y)
+        tx, ty = self._tree_view.convert_widget_to_tree_coords(x, y)
+        here = self._tree_view.get_path_at_pos(tx, ty)  # type: ignore
         if here is None:
             return
 

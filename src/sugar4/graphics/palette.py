@@ -225,7 +225,8 @@ class Palette(PaletteWindow):
 
     def _setup_widget(self):
         super()._setup_widget()
-        self._widget.connect("destroy", self.__destroy_cb)
+        if hasattr(self._widget, "connect") and GObject.signal_lookup("destroy", self._widget):
+            self._widget.connect("destroy", self.__destroy_cb)
 
     def __destroy_cb(self, palette):
         self.popdown(immediate=True)
@@ -491,7 +492,10 @@ class Palette(PaletteWindow):
                         child = next_child
 
                 self._teardown_widget()
-                self._widget.destroy()
+                if hasattr(self._widget, "destroy"):
+                    self._widget.destroy()
+                elif hasattr(self._widget, "unparent"):
+                    self._widget.unparent()
 
             self._widget = _PaletteMenuWidget()
 

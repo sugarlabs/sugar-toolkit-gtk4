@@ -138,19 +138,7 @@ class _TrayViewport(Gtk.ScrolledWindow):
             new_value = adj.get_value() - allocation.height
             adj.set_value(max(adj.get_lower(), new_value))
 
-    def do_get_preferred_width(self):
-        if self.orientation == Gtk.Orientation.HORIZONTAL:
-            return 0, -1  # Minimum 0, natural unlimited
-        else:
-            child_min, child_nat = self.traybar.get_preferred_size()
-            return child_min.width, child_nat.width
 
-    def do_get_preferred_height(self):
-        if self.orientation == Gtk.Orientation.VERTICAL:
-            return 0, -1  # Minimum 0, natural unlimited
-        else:
-            child_min, child_nat = self.traybar.get_preferred_size()
-            return child_min.height, child_nat.height
 
     def do_get_property(self, pspec):
         if pspec.name == "scrollable":
@@ -168,12 +156,13 @@ class _TrayViewport(Gtk.ScrolledWindow):
         if allocation.width <= 1 and allocation.height <= 1:
             return
 
-        traybar_min, traybar_nat = self.traybar.get_preferred_size()
+        min_w, nat_w, _, _ = self.traybar.measure(Gtk.Orientation.HORIZONTAL, -1)
+        min_h, nat_h, _, _ = self.traybar.measure(Gtk.Orientation.VERTICAL, -1)
 
         if self.orientation == Gtk.Orientation.HORIZONTAL:
-            scrollable = traybar_nat.width > allocation.width
+            scrollable = nat_w > allocation.width
         else:
-            scrollable = traybar_nat.height > allocation.height
+            scrollable = nat_h > allocation.height
 
         if scrollable != self._scrollable:
             self._scrollable = scrollable
@@ -263,6 +252,9 @@ class _TrayScrollButton(ToolButton):
             )
             self.set_sensitive(self._viewport.props.can_scroll_next)
 
+        # Initialize visibility correctly based on current state
+        self.set_visible(self._viewport.props.scrollable)
+
     def _viewport_scrollable_changed_cb(self, viewport, pspec):
         """Handle viewport scrollable state changes."""
         self.set_visible(self._viewport.props.scrollable)
@@ -345,6 +337,10 @@ class HTray(Gtk.Widget):
 
     def do_size_allocate(self, width, height, baseline):
         self._box.allocate(width, height, baseline, None)
+
+    def do_snapshot(self, snapshot):
+        if self._box:
+            self.snapshot_child(self._box, snapshot)
 
     def do_set_property(self, pspec, value):
         if pspec.name == "align":
@@ -468,6 +464,11 @@ class VTray(Gtk.Widget):
         """Allocate size to child widgets."""
         self._box.allocate(width, height, baseline, None)
 
+    def do_snapshot(self, snapshot):
+        """Render widget."""
+        if self._box:
+            self.snapshot_child(self._box, snapshot)
+
     def do_set_property(self, pspec, value):
         """Set property values."""
         if pspec.name == "align":
@@ -539,165 +540,37 @@ class VTray(Gtk.Widget):
 class TrayButton(ToolButton):
     """A button for use in trays."""
 
+    __gtype_name__ = "SugarTrayButton"
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
 
-class _IconWidget(Gtk.Widget):
-    """Widget for displaying tray icons."""
-
-    __gtype_name__ = "SugarTrayIconWidget"
-
-    def __init__(self, icon_name=None, xo_color=None):
-        super().__init__()
-
-        self._box = Gtk.Box()
-        self._box.set_parent(self)
-
-        self._icon = Icon(pixel_size=style.STANDARD_ICON_SIZE)
-        if icon_name is not None:
-            self.set_icon_name(icon_name)
-        if xo_color is not None:
-            self._icon.set_xo_color(xo_color)
-        self._box.append(self._icon)
-
-        click_gesture = Gtk.GestureClick()
-        click_gesture.connect("pressed", self._on_button_press)
-        click_gesture.connect("released", self._on_button_release)
-        self.add_controller(click_gesture)
-
-    def set_icon_name(self, icon_name):
-        # If icon_name is a path to a file, use it as file_name
-        import os
-
-        if icon_name and isinstance(icon_name, str) and os.path.isfile(icon_name):
-            self._icon.set_file_name(icon_name)
-            self._icon.set_icon_name(None)
-        else:
-            self._icon.set_icon_name(icon_name)
-            self._icon.set_file_name(None)
-
-    def get_icon_name(self):
-        # Prefer icon_name, but if not set, return file_name
-        name = self._icon.get_icon_name()
-        if name:
-            return name
-        return self._icon.get_file_name()
-
-    def do_dispose(self):
-        """Clean up widget on disposal."""
-        if self._box:
-            self._box.unparent()
-        ## TODO: Might be a bug
-        super().do_dispose()
-
-    def do_measure(self, orientation, for_size):
-        return self._box.measure(orientation, for_size)
-
-    def do_size_allocate(self, width, height, baseline):
-        self._box.allocate(width, height, baseline, None)
-
-    def do_snapshot(self, snapshot):
-        """Render widget using snapshot-based drawing."""
-        palette = (
-            self.get_parent().palette if hasattr(self.get_parent(), "palette") else None
-        )
-
-        if palette and palette.is_up():
-            width = self.get_width()
-            height = self.get_height()
-
-            # Use snapshot API for drawing background
-            color = Gdk.RGBA()
-            color.parse("#000000")
-            snapshot.append_color(color, Graphene.Rect().init(0, 0, width, height))
-
-        # Draw the child widget
-        self.snapshot_child(self._box, snapshot)
-
-    def _on_button_press(self, gesture, n_press, x, y):
-        pass
-
-    def _on_button_release(self, gesture, n_press, x, y):
-        pass
-
-    def get_icon(self):
-        return self._icon
-
-    def set_xo_color(self, xo_color):
-        self._icon.set_xo_color(xo_color)
-
-    def get_xo_color(self):
-        return self._icon.get_xo_color()
-
-
-class TrayIcon(Gtk.Button):
+class TrayIcon(ToolButton):
     """An icon for use in trays with palette support."""
 
     __gtype_name__ = "SugarTrayIcon"
 
     def __init__(self, icon_name=None, xo_color=None):
-        super().__init__()
+        super().__init__(icon_name=icon_name)
 
-        self._icon_widget = _IconWidget()
-        if icon_name is not None:
-            self.set_icon_name(icon_name)
         if xo_color is not None:
             self.set_xo_color(xo_color)
-        self.set_child(self._icon_widget)
 
         self._palette_invoker = ToolInvoker(self)
 
         self.set_size_request(style.GRID_CELL_SIZE, style.GRID_CELL_SIZE)
 
-        self.connect("destroy", self.__destroy_cb)
-
-    def __destroy_cb(self, icon):
-        """Clean up on destruction."""
-        if self._palette_invoker is not None:
-            self._palette_invoker.detach()
-
-    def create_palette(self):
-        """Create palette - override in subclasses."""
+    def get_xo_color(self):
+        icon_widget = self.get_icon_widget()
+        if icon_widget and hasattr(icon_widget, 'get_xo_color'):
+            return icon_widget.get_xo_color()
         return None
 
-    def get_palette(self):
-        return self._palette_invoker.palette
-
-    def set_palette(self, palette):
-        self._palette_invoker.palette = palette
-
-    palette = GObject.Property(type=object, setter=set_palette, getter=get_palette)
-
-    def get_palette_invoker(self):
-        """Get the palette invoker."""
-        return self._palette_invoker
-
-    def set_palette_invoker(self, palette_invoker):
-        """Set the palette invoker."""
-        self._palette_invoker.detach()
-        self._palette_invoker = palette_invoker
-
-    palette_invoker = GObject.Property(
-        type=object, setter=set_palette_invoker, getter=get_palette_invoker
-    )
-
-    def get_icon(self):
-        return self._icon_widget.get_icon()
-
-    def get_icon_name(self):
-        return self._icon_widget.get_icon_name()
-
-    def set_icon_name(self, icon_name):
-        self._icon_widget.set_icon_name(icon_name)
-
-    def get_xo_color(self):
-        return self._icon_widget.get_xo_color()
-
     def set_xo_color(self, xo_color):
-        self._icon_widget.set_xo_color(xo_color)
-
-    icon = property(get_icon, None)
+        icon_widget = self.get_icon_widget()
+        if icon_widget and hasattr(icon_widget, 'set_xo_color'):
+            icon_widget.set_xo_color(xo_color)
 
 
 def _apply_tray_css():

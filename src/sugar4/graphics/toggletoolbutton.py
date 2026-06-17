@@ -99,6 +99,11 @@ class ToggleToolButton(Gtk.ToggleButton):
         self._palette_invoker = ToolInvoker(self)
         self._accelerator = None
 
+        self.add_css_class("toolbar-button")
+        self.add_css_class("flat")
+        self.set_has_frame(False)
+        self.set_can_focus(True)
+
         if icon_name:
             self.set_icon_name(icon_name)
 
@@ -106,6 +111,44 @@ class ToggleToolButton(Gtk.ToggleButton):
         self.connect("notify::root", _on_root_changed)
         self.connect("map", self._on_mapped)
         self.connect("destroy", self.__destroy_cb)
+
+        self._apply_toolbar_button_css()
+
+    def _apply_toolbar_button_css(self):
+        css = """
+        .toolbar-button {
+            border-radius: 6px;
+            margin: 2px;
+            padding: 6px;
+            min-width: 32px;
+            min-height: 32px;
+            background: transparent;
+            border: none;
+        }
+
+        .toolbar-button:hover {
+            background: alpha(currentColor, 0.1);
+        }
+
+        .toolbar-button:active,
+        .toolbar-button:checked {
+            background: alpha(currentColor, 0.2);
+            border: 1px solid alpha(currentColor, 0.3);
+            box-shadow: none;
+        }
+
+        .toolbar-button:focus {
+            outline: 2px solid rgb(53, 132, 228);
+            outline-offset: 2px;
+        }
+        """
+        try:
+            css_provider = Gtk.CssProvider()
+            css_provider.load_from_string(css)
+            self.get_style_context().add_provider(css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        except Exception as e:
+            import logging
+            logging.warning(f"Could not apply toolbar button CSS: {e}")
 
     def _on_mapped(self, widget):
         """Called when widget is mapped (visible and added to window)."""

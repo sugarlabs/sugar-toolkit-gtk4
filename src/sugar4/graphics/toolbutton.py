@@ -134,6 +134,7 @@ class ToolButton(Gtk.Button):
 
         # button styling for toolbar appearance
         self.add_css_class("toolbar-button")
+        self.add_css_class("flat")
         self.set_has_frame(False)
         self.set_can_focus(True)
 
@@ -172,17 +173,17 @@ class ToolButton(Gtk.Button):
         }
 
         .toolbar-button:hover {
-            background: alpha(@theme_fg_color, 0.1);
+            background: alpha(currentColor, 0.1);
         }
 
         .toolbar-button:active,
         .toolbar-button.active {
-            background: alpha(@theme_fg_color, 0.2);
-            border: 1px solid alpha(@theme_fg_color, 0.3);
+            background: alpha(currentColor, 0.2);
+            border: 1px solid alpha(currentColor, 0.3);
         }
 
         .toolbar-button:focus {
-            outline: 2px solid @theme_selected_bg_color;
+            outline: 2px solid rgb(53, 132, 228);
             outline-offset: 2px;
         }
         """
@@ -417,50 +418,7 @@ class ToolButton(Gtk.Button):
         blurb="Invoker for the palette",
     )
 
-    def do_snapshot(self, snapshot):
-        """Render tool button using snapshot-based drawing."""
-        # Draw focus rectangle
-        if self.has_focus():
-            width = self.get_width()
-            height = self.get_height()
-            rect = Graphene.Rect()
-            rect.init(0, 0, width, height)
 
-            color = Gdk.RGBA()
-            color.parse(style.COLOR_BUTTON_GREY.get_svg())
-            snapshot.append_color(color, rect)
-
-        # Snapshot child
-        child = self.get_first_child()
-        while child is not None:
-            self.snapshot_child(child, snapshot)
-            child = child.get_next_sibling()
-
-        palette = self.get_palette()
-        if palette and palette.is_up():
-            # Get button allocation
-            width = self.get_width()
-            height = self.get_height()
-
-            if width > 0 and height > 0:
-                # Draw active state border
-                color = Gdk.RGBA()
-                color.red = 0.0
-                color.green = 0.5
-                color.blue = 1.0
-                color.alpha = 0.8
-
-                rect = Graphene.Rect()
-                rect.init(0, 0, width, height)
-                rounded = Gsk.RoundedRect()
-                rounded.init_from_rect(rect, 6.0)
-
-                # Draw border
-                snapshot.append_border(
-                    rounded,
-                    [2, 2, 2, 2],  # border widths
-                    [color, color, color, color],  # border colors
-                )
 
     def set_active(self, active: bool):
         if active:
@@ -493,7 +451,7 @@ def _apply_module_css():
 
     /* Active palette indicator */
     .toolbar-button.active {
-        box-shadow: inset 0 0 0 2px @theme_selected_bg_color;
+        box-shadow: inset 0 0 0 2px rgb(53, 132, 228);
     }
     """
 

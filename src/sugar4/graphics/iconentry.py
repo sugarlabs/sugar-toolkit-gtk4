@@ -64,8 +64,6 @@ class IconEntry(Gtk.Entry):
     a built-in clear button that appears when text is present.
     """
 
-    __gtype_name__ = "SugarIconEntry"
-
     def __init__(self):
         GObject.GObject.__init__(self)
 

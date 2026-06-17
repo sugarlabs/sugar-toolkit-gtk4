@@ -268,7 +268,7 @@ def zoom(units: float) -> int:
     Args:
         units (int or float): Size of item at full size
     """
-    return int(ZOOM_FACTOR * units)
+    return round(ZOOM_FACTOR * units)
 
 
 def apply_css_to_widget(widget, css: str) -> None:
@@ -310,6 +310,27 @@ toolbar {
 }
 toolbar button {
     padding: 2px;
+}
+
+/* Palette styling for GTK4 */
+.palette, SugarPaletteMenuWidget, SugarPaletteWindowWidget {
+    background-color: #000000;
+    color: #FFFFFF;
+    border-radius: 11px;
+    border: 2px solid #808080;
+}
+.palette * {
+    color: #FFFFFF;
+}
+.palette *:insensitive {
+    color: #808080;
+}
+
+/* Search bar and toolbar entry styling */
+.toolbar entry, .toolbar .entry {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #808080;
 }
 """
 

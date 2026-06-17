@@ -136,7 +136,15 @@ class Alert(Gtk.Box):
         self.append(self._buttons_box)
 
         self.add_css_class("sugar-alert")
-
+        
+        css = """
+        .sugar-alert {
+            background-color: @theme_bg_color;
+            border: 2px solid @theme_fg_color;
+            border-radius: 4px;
+        }
+        """
+        style.apply_css_to_widget(self, css)
     def do_set_property(self, pspec, value):
         """
         Set alert property, GObject internal method.

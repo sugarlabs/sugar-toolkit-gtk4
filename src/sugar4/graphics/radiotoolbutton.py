@@ -87,20 +87,17 @@ class RadioToolButton(ToolButton):
     def _apply_radio_styling(self):
         css = """
         .radio-tool-button {
-            border-radius: 4px;
-            margin: 1px;
         }
 
         .radio-tool-button:checked,
         .radio-tool-button.active {
-            background: alpha(@theme_selected_bg_color, 0.2);
-            border: 1px solid @theme_selected_bg_color;
+            background-color: %s;
         }
 
         .radio-tool-button:hover:not(.active) {
             background: alpha(@theme_fg_color, 0.05);
         }
-        """
+        """ % style.COLOR_BUTTON_GREY.get_html()
         style.apply_css_to_widget(self, css)
 
     def _on_clicked(self, button):

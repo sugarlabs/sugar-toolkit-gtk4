@@ -77,11 +77,13 @@ class ToolbarButton(ToolButton):
 
     def _hierarchy_changed_cb(self, widget, pspec):
         parent = self.get_parent()
-        if hasattr(parent, "owner"):
-            if self.page_widget and self.get_root():
-                self._unparent()
+        if self.page_widget and self.get_root():
+            self._unparent()
+            if hasattr(parent, "owner"):
                 parent.owner.append(self.page_widget)
-                self.set_expanded(False)
+                self.page_widget.set_visible(self._expanded)
+            else:
+                self._move_page_to_palette()
 
     def get_toolbar_box(self):
         parent = self.get_parent()
@@ -494,7 +496,7 @@ def _setup_page(page_widget, color, hpad):
 
 
 def _embed_page(page_widget, page):
-    page.show()
+    page.set_visible(True)
 
     # Box instead of Alignment
     container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -503,10 +505,10 @@ def _embed_page(page_widget, page):
     # The toolbar should not absorb extra vertical space; keep it compact.
     container.set_vexpand(False)
     container.append(page)
-    container.show()
+    container.set_visible(True)
 
     page_widget.append(container)
-    page_widget.show()
+    page_widget.set_visible(True)
 
     return (page_widget, container)
 
