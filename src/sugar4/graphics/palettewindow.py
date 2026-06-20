@@ -45,7 +45,7 @@ print = debug_print
 
 
 def _get_pointer_position(widget):
-    """Get pointer position relative to widget ."""
+    """Get pointer position relative to widget."""
     global _pointer
     if _pointer is None:
         display = widget.get_display()
@@ -61,8 +61,20 @@ def _get_pointer_position(widget):
         return (0, 0)
 
     try:
-        device_position = surface.get_device_position(_pointer)
-        return (device_position[1], device_position[2])  # x, y
+        ret = surface.get_device_position(_pointer)
+        if len(ret) == 4:
+            _, x, y, _ = ret
+        else:
+            x, y, _ = ret
+
+        import gi
+        gi.require_version('Graphene', '1.0')
+        from gi.repository import Graphene
+        p = Graphene.Point().init(x, y)
+        success, tp = native.compute_point(widget, p)
+        if success:
+            return (tp.x, tp.y)
+        return (x, y)
     except Exception:
         return (0, 0)
 
@@ -111,6 +123,7 @@ class _PaletteMenuWidget(Gtk.Popover):
         
         self.add_css_class("palette")
         self.add_css_class("palette-popover")
+        self.set_has_arrow(False)
 
         # container for menu items
         self._menu_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -349,6 +362,7 @@ class _PaletteWindowWidget(Gtk.Popover):
         # Apply palette styling
         self.add_css_class("palette")
         self.add_css_class("palette-popover")
+        self.set_has_arrow(False)
 
         self._old_alloc = None
         self._invoker = None
@@ -364,6 +378,11 @@ class _PaletteWindowWidget(Gtk.Popover):
         self._motion_controller.connect("enter", self._enter_notify_cb)
         self._motion_controller.connect("leave", self._leave_notify_cb)
         self.add_controller(self._motion_controller)
+
+        self.connect("closed", self._on_closed)
+
+    def _on_closed(self, popover):
+        self._up = False
 
     def get_rect(self):
         """Get the bounding box of the palette."""
@@ -1419,6 +1438,15 @@ class WidgetInvoker(Invoker):
         self.notify_mouse_enter()
 
     def __leave_notify_event_cb(self, controller):
+        if self._widget:
+            try:
+                x, y = _get_pointer_position(self._widget)
+                width = self._widget.get_width()
+                height = self._widget.get_height()
+                if 0 <= x <= width and 0 <= y <= height:
+                    return
+            except Exception:
+                pass
         self.notify_mouse_leave()
 
     def __button_release_event_cb(self, gesture, n_press, x, y):
@@ -1558,6 +1586,15 @@ class CursorInvoker(Invoker):
         self.notify_mouse_enter()
 
     def __leave_notify_event_cb(self, controller):
+        if self.parent:
+            try:
+                x, y = _get_pointer_position(self.parent)
+                width = self.parent.get_width()
+                height = self.parent.get_height()
+                if 0 <= x <= width and 0 <= y <= height:
+                    return
+            except Exception:
+                pass
         self.notify_mouse_leave()
 
     def __button_release_event_cb(self, gesture, n_press, x, y):
@@ -1781,11 +1818,16 @@ class TreeViewInvoker(Invoker):
 
         button = gesture.get_current_button()
         if button == 1:
+            # Deny the sequence so TreeView's internal row-activation gesture receives it
+            sequence = gesture.get_current_sequence()
+            if sequence:
+                gesture.set_state(sequence, Gtk.EventSequenceState.DENIED)
+            
             # Left mouse button
             if self.palette is not None:
                 self.palette.popdown(immediate=True)
 
-            # Handle cell renderer click
+            # Handle cell renderer click manually because GTK4 TreeView single-click doesn't reliably trigger do_activate
             if column and hasattr(column, "get_cells"):
                 cells = column.get_cells()
                 if cells:
@@ -1796,6 +1838,7 @@ class TreeViewInvoker(Invoker):
                         and isinstance(cellrenderer, CellRendererIcon)
                     ):
                         cellrenderer.emit("clicked", path)  # type: ignore
+
             return False
         elif button == 3:
             # Right mouse button

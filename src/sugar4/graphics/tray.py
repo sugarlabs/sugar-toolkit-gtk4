@@ -556,6 +556,9 @@ class TrayIcon(ToolButton):
 
         if xo_color is not None:
             self.set_xo_color(xo_color)
+        else:
+            self.icon.props.stroke_color = style.COLOR_WHITE.get_svg()
+            self.icon.props.fill_color = style.COLOR_TRANSPARENT.get_svg()
 
         self._palette_invoker = ToolInvoker(self)
 
