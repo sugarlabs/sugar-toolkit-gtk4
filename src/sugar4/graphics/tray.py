@@ -572,6 +572,10 @@ class TrayIcon(ToolButton):
         if icon_widget and hasattr(icon_widget, 'set_xo_color'):
             icon_widget.set_xo_color(xo_color)
 
+    @property
+    def icon(self):
+        return self.get_icon_widget()
+
 
 def _apply_tray_css():
     """Apply CSS styling for tray widgets."""

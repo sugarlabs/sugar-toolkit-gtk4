@@ -403,6 +403,9 @@ class Palette(PaletteWindow):
             self._setup_widget()
 
             self._palette_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+            # Guard against double-parenting: unparent first if already parented
+            if self._primary_event_box.get_parent() is not None:
+                self._primary_event_box.unparent()
             self._palette_box.append(self._primary_event_box)
             self._palette_box.append(self._secondary_box)
 
@@ -499,6 +502,11 @@ class Palette(PaletteWindow):
 
             self._widget = _PaletteMenuWidget()
 
+            # Critical: Must unparent _primary_event_box from any existing parent
+            # before re-parenting it inside _HeaderItem. Without this GTK4 aborts
+            # with "assertion failed: (priv->root == NULL)".
+            if self._primary_event_box.get_parent() is not None:
+                self._primary_event_box.unparent()
             self._label_menuitem = _HeaderItem(self._primary_event_box)
             self._widget.append(self._label_menuitem)
 

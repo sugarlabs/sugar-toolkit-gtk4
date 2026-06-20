@@ -139,7 +139,7 @@ class ToolButton(Gtk.Button):
         self.set_can_focus(True)
 
         self._palette_invoker = ToolInvoker()
-        self._palette_invoker.attach(self)
+        self._palette_invoker.attach_tool(self)
 
         self._content_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         self._content_box.set_halign(Gtk.Align.CENTER)
