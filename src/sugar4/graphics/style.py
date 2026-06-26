@@ -312,6 +312,14 @@ toolbar button {
     padding: 2px;
 }
 
+/* Tray button styling to resolve layout overflow in GTK4 */
+button.tray-button, .tray-button {
+    margin: 0px;
+    padding: 0px;
+    min-width: 32px;
+    min-height: 32px;
+}
+
 /* Palette styling for GTK4 */
 .palette, SugarPaletteMenuWidget, SugarPaletteWindowWidget {
     background-color: #000000;
@@ -322,7 +330,7 @@ toolbar button {
 .palette * {
     color: #FFFFFF;
 }
-.palette *:insensitive {
+.palette *:disabled {
     color: #808080;
 }
 

@@ -41,7 +41,6 @@ Example:
         # Construct a 5 second animator
         animator = Animator(5, widget=w)
 
-        # Create an animation subclass to animate the widget
         class SizeAnimation(Animation):
             def __init__(self):
                 # Tell the animation to give us values between 20 and
@@ -120,6 +119,7 @@ class Animator(GObject.GObject):
         self._tick_callback_id = 0
         self._start_time = None
         self._completed = False
+        self._in_tick_cb = False
 
     def add(self, animation):
         """
@@ -176,10 +176,11 @@ class Animator(GObject.GObject):
         """
         # Stop any active animation
         if self._tick_callback_id and self._widget:
-            try:
-                self._widget.remove_tick_callback(self._tick_callback_id)
-            except Exception as e:
-                logging.warning(f"Error removing tick callback: {e}")
+            if not getattr(self, '_in_tick_cb', False):
+                try:
+                    self._widget.remove_tick_callback(self._tick_callback_id)
+                except Exception as e:
+                    logging.warning(f"Error removing tick callback: {e}")
             self._tick_callback_id = 0
 
         if self._timeout_sid:
@@ -199,8 +200,17 @@ class Animator(GObject.GObject):
         """Frame clock callback for smooth animation timing."""
         if self._start_time is None:
             self._start_time = time.time()
-
-        return self._next_frame_cb()
+            
+        self._in_tick_cb = True
+        try:
+            res = self._next_frame_cb()
+        finally:
+            self._in_tick_cb = False
+            
+        if res == GLib.SOURCE_REMOVE:
+            self._tick_callback_id = 0
+            
+        return res
 
     def _timeout_cb(self):
         """GLib timeout callback."""
@@ -238,7 +248,6 @@ class Animation(object):
 
     .. code-block:: python
 
-        # Create an animation subclass
         class MyAnimation(Animation):
             def __init__(self, thing):
                 # Tell the animation to give us values between 0.0 and
