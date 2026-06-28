@@ -1,4 +1,4 @@
-# Copyright (C) 2007, Red Hat, Inc.
+﻿# Copyright (C) 2007, Red Hat, Inc.
 # Copyright (C) 2008, One Laptop Per Child
 # Copyright (C) 2025 MostlyK
 #
@@ -76,10 +76,8 @@ def _add_accelerator(tool_button):
     if not root:
         return
 
-    # GTK4: Use application shortcuts instead of AccelGroup
     app = root.get_application() if hasattr(root, "get_application") else None
     if app and hasattr(app, "set_accels_for_action"):
-        # Create a unique action name for this button
         action_name = f"toolbutton.{id(tool_button)}"
 
         # Add the action to trigger the button click
@@ -104,7 +102,6 @@ def _hierarchy_changed_cb(tool_button):
 
 def setup_accelerator(tool_button):
     _add_accelerator(tool_button)
-    # GTK4: Connect to root notify signal since hierarchy-changed doesn't exist
     if hasattr(tool_button, "connect"):
         tool_button.connect(
             "notify::root", lambda *args: _hierarchy_changed_cb(tool_button)

@@ -1,4 +1,4 @@
-# Copyright (C) 2007, One Laptop Per Child
+﻿# Copyright (C) 2007, One Laptop Per Child
 # Copyright (C) 2025 MostlyK
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -87,7 +87,6 @@ def get_preview_pixbuf(preview_data, width=-1, height=-1):
 
                 preview_data = base64.b64decode(preview_data)
             elif isinstance(preview_data, bytes):
-                # Check if it's base64 encoded
                 if preview_data[1:4] != b"PNG":
                     import base64
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2009, Aleksey Lim
+﻿# Copyright (C) 2009, Aleksey Lim
 # Copyright (C) 2025 MostlyK
 #
 # This library is free software; you can redistribute it and/or
@@ -188,7 +188,6 @@ class ToolbarButton(ToolButton):
 
     def do_snapshot(self, snapshot):
         """GTK4 drawing implementation with arrow indicator."""
-        # Snapshot child
         child = self.get_first_child()
         while child is not None:
             self.snapshot_child(child, snapshot)
@@ -243,7 +242,6 @@ class ToolbarBox(Gtk.Box):
 
         self._toolbar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self._toolbar.owner = self
-        # GTK4: Box doesn't have a "remove" signal, we'll handle removal differently
 
         self._toolbar_widget, self._toolbar_alignment = _embed_page(
             Gtk.Box(orientation=Gtk.Orientation.VERTICAL), self._toolbar
@@ -299,7 +297,6 @@ class ToolbarBox(Gtk.Box):
     def set_padding(self, pad):
         self._padding = pad
         if self._toolbar_alignment:
-            # GTK4: Use margins instead of alignment padding
             self._toolbar_alignment.set_margin_start(pad)
             self._toolbar_alignment.set_margin_end(pad)
 
@@ -442,7 +439,6 @@ class _Box(Gtk.Box):
 
     def do_snapshot(self, snapshot):
         """Render palette using snapshot drawing."""
-        # Snapshot child
         child = self.get_first_child()
         while child is not None:
             self.snapshot_child(child, snapshot)

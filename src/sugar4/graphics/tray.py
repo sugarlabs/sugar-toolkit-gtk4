@@ -72,6 +72,8 @@ class _TrayViewport(Gtk.ScrolledWindow):
         else:
             self.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
+        self.set_has_frame(False)
+
         # using Box instead of Toolbar for GTK4
         self.traybar = Gtk.Box(orientation=orientation)
         self.traybar.set_homogeneous(False)
@@ -97,7 +99,6 @@ class _TrayViewport(Gtk.ScrolledWindow):
             logging.warning("Item not found in tray children")
             return
 
-        # Get the item's allocation
         allocation = item.get_allocation()
         if self.orientation == Gtk.Orientation.HORIZONTAL:
             adj = self.get_hadjustment()
@@ -225,6 +226,7 @@ class _TrayScrollButton(ToolButton):
         self._viewport = None
         self._scroll_direction = scroll_direction
 
+        self.add_css_class("tray-button")
         self.set_size_request(style.GRID_CELL_SIZE, style.GRID_CELL_SIZE)
 
         self.icon = Icon(icon_name=icon_name, pixel_size=style.SMALL_ICON_SIZE)
@@ -252,7 +254,6 @@ class _TrayScrollButton(ToolButton):
             )
             self.set_sensitive(self._viewport.props.can_scroll_next)
 
-        # Initialize visibility correctly based on current state
         self.set_visible(self._viewport.props.scrollable)
 
     def _viewport_scrollable_changed_cb(self, viewport, pspec):
@@ -321,9 +322,7 @@ class HTray(Gtk.Widget):
         scroll_right.viewport = self._viewport
 
         if self.align == ALIGN_TO_END:
-            spacer = Gtk.Box()
-            spacer.set_hexpand(True)
-            self._viewport.add_item(spacer, 0)
+            self._viewport.set_halign(Gtk.Align.END)
 
     def do_dispose(self):
         """Clean up widget on disposal."""
@@ -362,7 +361,6 @@ class HTray(Gtk.Widget):
         if self._drag_active != active:
             self._drag_active = active
             if self._drag_active:
-                # GTK4: Use CSS for background color changes
                 self._viewport.add_css_class("drag-active")
             else:
                 self._viewport.remove_css_class("drag-active")
@@ -374,14 +372,9 @@ class HTray(Gtk.Widget):
         self._set_drag_active(active)
 
     def get_children(self):
-        children = self._viewport.get_children()
-        if self.align == ALIGN_TO_END and children:
-            return children[1:]  # Skip spacer
-        return children
+        return self._viewport.get_children()
 
     def add_item(self, item, index=-1):
-        if self.align == ALIGN_TO_END and index > -1:
-            index += 1  # Account for spacer
         self._viewport.add_item(item, index)
 
     def remove_item(self, item):
@@ -391,10 +384,7 @@ class HTray(Gtk.Widget):
         """Get index of item in tray."""
         children = self._viewport.get_children()
         try:
-            index = children.index(item)
-            if self.align == ALIGN_TO_END:
-                index -= 1  # Account for spacer
-            return index
+            return children.index(item)
         except ValueError:
             return -1
 
@@ -445,9 +435,7 @@ class VTray(Gtk.Widget):
         scroll_down.viewport = self._viewport
 
         if self.align == ALIGN_TO_END:
-            spacer = Gtk.Box()
-            spacer.set_vexpand(True)
-            self._viewport.add_item(spacer, 0)
+            self._viewport.set_valign(Gtk.Align.END)
 
     def do_dispose(self):
         """Clean up widget on disposal."""
@@ -506,15 +494,10 @@ class VTray(Gtk.Widget):
 
     def get_children(self):
         """Get tray children."""
-        children = self._viewport.get_children()
-        if self.align == ALIGN_TO_END and children:
-            return children[1:]  # Skip spacer
-        return children
+        return self._viewport.get_children()
 
     def add_item(self, item, index=-1):
         """Add item to tray."""
-        if self.align == ALIGN_TO_END and index > -1:
-            index += 1  # Account for spacer
         self._viewport.add_item(item, index)
 
     def remove_item(self, item):
@@ -525,10 +508,7 @@ class VTray(Gtk.Widget):
         """Get index of item in tray."""
         children = self._viewport.get_children()
         try:
-            index = children.index(item)
-            if self.align == ALIGN_TO_END:
-                index -= 1  # Account for spacer
-            return index
+            return children.index(item)
         except ValueError:
             return -1
 
@@ -544,6 +524,8 @@ class TrayButton(ToolButton):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.add_css_class("tray-button")
+        self.set_size_request(style.GRID_CELL_SIZE, style.GRID_CELL_SIZE)
 
 
 class TrayIcon(ToolButton):
@@ -553,6 +535,8 @@ class TrayIcon(ToolButton):
 
     def __init__(self, icon_name=None, xo_color=None):
         super().__init__(icon_name=icon_name)
+
+        self.add_css_class("tray-button")
 
         if xo_color is not None:
             self.set_xo_color(xo_color)

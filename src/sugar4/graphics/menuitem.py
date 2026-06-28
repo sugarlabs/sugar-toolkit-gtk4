@@ -1,4 +1,4 @@
-# Copyright (C) 2007, Eduardo Silva <edsiper@gmail.com>
+﻿# Copyright (C) 2007, Eduardo Silva <edsiper@gmail.com>
 # Copyright (C) 2025 MostlyK
 #
 # This library is free software; you can redistribute it and/or
@@ -161,7 +161,6 @@ class MenuItem(Gtk.Button):
         if self._accelerator is None:
             return
 
-        # Get the application and add accelerator
         app = Gio.Application.get_default()
         if app is None:
             logging.debug("No application available for accelerator")

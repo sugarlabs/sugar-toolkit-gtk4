@@ -1,4 +1,4 @@
-# Copyright (C) 2007, Red Hat, Inc.
+﻿# Copyright (C) 2007, Red Hat, Inc.
 # Copyright (C) 2012, Daniel Francis
 # Copyright (C) 2025 MostlyK
 #
@@ -256,7 +256,6 @@ class ToggleToolButton(Gtk.ToggleButton):
         """
         Render the toggle tool button using snapshot-based drawing.
         """
-        # Snapshot child
         child = self.get_first_child()
         while child is not None:
             self.snapshot_child(child, snapshot)
@@ -275,6 +274,5 @@ class ToggleToolButton(Gtk.ToggleButton):
         # Call parent implementation first to handle toggle behavior
         Gtk.ToggleButton.do_clicked(self)
 
-        # Then handle palette
         if self.palette:
             self.palette.popdown(True)

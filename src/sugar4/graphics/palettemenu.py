@@ -166,6 +166,8 @@ class PaletteMenuBox(Gtk.Box):
         hbox.set_margin_end(horizontal_padding)
         hbox.append(widget)
 
+        widget.bind_property("visible", vbox, "visible", GObject.BindingFlags.SYNC_CREATE)
+
         return vbox
 
 
@@ -298,6 +300,12 @@ class PaletteMenuItem(Gtk.Button):
         """Handle button activation - emits our custom signal."""
         # this has been done to remove the conflict with Gtk.Button's activate
         self.emit("item-activated")
+        parent = self.get_parent()
+        while parent:
+            if isinstance(parent, Gtk.Popover):
+                parent.popdown()
+                break
+            parent = parent.get_parent()
 
     def _apply_menu_item_styling(self):
         """Styling is handled by sugar.css via .palette-menu-item class rules."""
@@ -319,6 +327,12 @@ class PaletteMenuItem(Gtk.Button):
     def _clicked_cb(self, button):
         """Handle button click and emit activate signal."""
         self.emit("item-activated")
+        parent = self.get_parent()
+        while parent:
+            if isinstance(parent, Gtk.Popover):
+                parent.popdown()
+                break
+            parent = parent.get_parent()
 
     def _on_enter_notify(self, controller, x, y):
         """Handle mouse enter event."""

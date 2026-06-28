@@ -19,10 +19,8 @@ Example:
 
         from sugar4.graphics.alert import Alert
 
-        # Create a new simple alert
         alert = Alert()
 
-        # Set the title and text body of the alert
         alert.props.title = _('Title of Alert Goes Here')
         alert.props.msg = _('Text message of alert goes here')
 
@@ -139,9 +137,12 @@ class Alert(Gtk.Box):
         
         css = """
         .sugar-alert {
-            background-color: @theme_bg_color;
-            border: 2px solid @theme_fg_color;
+            background-color: black;
+            border: 2px solid #808080;
             border-radius: 4px;
+        }
+        .sugar-alert label {
+            color: white;
         }
         """
         style.apply_css_to_widget(self, css)
@@ -227,9 +228,16 @@ class Alert(Gtk.Box):
         """
         button = Gtk.Button()
         self._buttons[response_id] = button
+        
         if icon is not None:
-            button.set_child(icon)
-        button.set_label(label)
+            box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=style.DEFAULT_PADDING)
+            box.append(icon)
+            text_label = Gtk.Label(label=label)
+            box.append(text_label)
+            button.set_child(box)
+        else:
+            button.set_label(label)
+            
         self._buttons_box.append(button)
         button.connect("clicked", self.__button_clicked_cb, response_id)
         return button
@@ -322,7 +330,6 @@ class _TimeoutIcon(Gtk.Widget):
         width = self.get_width()
         height = self.get_height()
 
-        # Create a cairo context from snapshot
         rect = Graphene.Rect()
         rect.init(0, 0, width, height)
         cr = snapshot.append_cairo(rect)

@@ -1,4 +1,4 @@
-# Copyright (C) 2007, Eduardo Silva <edsiper@gmail.com>
+﻿# Copyright (C) 2007, Eduardo Silva <edsiper@gmail.com>
 # Copyright (C) 2008, One Laptop Per Child
 # Copyright (C) 2009, Tomeu Vizoso
 # Copyright (C) 2011, Benjamin Berg <benjamin@sipsolutions.net>
@@ -100,7 +100,6 @@ class _HeaderItem(Gtk.Widget):
         height = self.get_height()
 
         if width > 0 and height > 0:
-            # Create a colored rectangle for the separator
             color = Gdk.RGBA()
             color.red = color.green = color.blue = 0.5  # Grey
             color.alpha = 1.0
@@ -464,7 +463,6 @@ class Palette(PaletteWindow):
         self._update_separators()
 
     def __widget_button_release_cb(self, gesture, n_press, x, y):
-        # Check if the event widget is a PaletteMenuItem
         widget = gesture.get_widget()
         while widget:
             if isinstance(widget, PaletteMenuItem):
@@ -480,7 +478,6 @@ class Palette(PaletteWindow):
         return self._label.measure(Gtk.Orientation.HORIZONTAL, -1)[1]
 
     def _update_separators(self):
-        # Check if there are content children
         if self._content is not None:
             visible = self._content.get_first_child() is not None
             self._separator.set_visible(visible)
@@ -555,7 +552,6 @@ class PaletteActionBar(Gtk.Box):
 
         if icon_name:
             icon = Icon(icon_name=icon_name, pixel_size=style.SMALL_ICON_SIZE)
-            # GTK4: Use set_child instead of set_image
             box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
             box.append(icon)
             box.append(Gtk.Label(label=label))

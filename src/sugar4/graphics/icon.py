@@ -58,7 +58,6 @@ import cairo
 from sugar4.graphics.xocolor import XoColor
 
 
-# Simple LRU cache implementation
 class _LRU:
     def __init__(self, size):
         self.size = size
@@ -89,7 +88,6 @@ class _LRU:
 _BADGE_SIZE = 0.45
 _DEFAULT_ICON_SIZE = 48
 
-# Icon size constants
 SMALL_ICON_SIZE = 16
 STANDARD_ICON_SIZE = 48
 LARGE_ICON_SIZE = 96
@@ -118,7 +116,6 @@ class _SVGLoader:
                 logging.error("Failed to load icon file %s: %s", file_name, e)
                 return None
 
-        # Replace entities
         for entity, value in entities.items():
             if isinstance(value, str):
                 xml = f'<!ENTITY {entity} "{value}">'
@@ -206,7 +203,6 @@ class _IconBuffer:
         if self.stroke_color:
             entities["stroke_color"] = self.stroke_color
 
-        # Handle Color objects
         processed_entities = {}
         for k, v in entities.items():
             if hasattr(v, 'get_svg'):
@@ -225,7 +221,6 @@ class _IconBuffer:
         if not file_name:
             return attach_x, attach_y
 
-        # Try to read from .icon file
         icon_config_file = file_name.replace(".svg", ".icon")
         if icon_config_file != file_name and os.path.exists(icon_config_file):
             try:
@@ -252,7 +247,6 @@ class _IconBuffer:
         elif icon_name:
             icon_theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
 
-            # Use IconTheme.lookup_icon for themed icon resolution
             icon_paintable = icon_theme.lookup_icon(
                 icon_name,
                 None,
@@ -327,7 +321,6 @@ class _IconBuffer:
         if badge_file_name.endswith(".svg"):
             handle = self._load_svg(badge_file_name)
             if handle:
-                # Get SVG dimensions
                 svg_rect = handle.get_intrinsic_size_in_pixels()
                 if svg_rect[0]:  # has_width
                     icon_width, icon_height = svg_rect[1], svg_rect[2]
@@ -336,7 +329,6 @@ class _IconBuffer:
 
                 context.scale(float(size) / icon_width, float(size) / icon_height)
 
-                # Create viewport
                 viewport = Rsvg.Rectangle()
                 viewport.x = 0
                 viewport.y = 0
@@ -387,14 +379,13 @@ class _IconBuffer:
         if cache_key in self._surface_cache:
             return self._surface_cache[cache_key]
 
-        # Handle pixbuf directly
         if self.pixbuf:
             surface = self._create_surface_from_pixbuf(self.pixbuf, sensitive)
             if surface:
                 self._surface_cache[cache_key] = surface
             return surface
 
-        # Try to load from file or theme, fallback to document-generic
+        # fall back to document-generic if neither file nor theme icon resolves
         for file_name, icon_name in [
             (self.file_name, self.icon_name),
             (None, "document-generic"),
@@ -440,7 +431,6 @@ class _IconBuffer:
             )
             ctx.paint()
 
-        # Scale pixbuf to fit
         pb_width, pb_height = pixbuf.get_width(), pixbuf.get_height()
         scale_x = width / pb_width
         scale_y = height / pb_height
@@ -491,20 +481,16 @@ class _IconBuffer:
         if not handle:
             return None
 
-        # SVG dimensions
         svg_rect = handle.get_intrinsic_size_in_pixels()
         if svg_rect[0]:  # has_width
             icon_width, icon_height = int(svg_rect[1]), int(svg_rect[2])
         else:
-            # Fallback dimensions
             icon_width = icon_height = 48
 
-        # badge info and padding
         badge_info = self._get_badge_info(icon_info, icon_width, icon_height)
         padding = badge_info.icon_padding
         width, height = self._get_size(icon_width, icon_height, padding)
 
-        # Create surface
         if self.background_color is None:
             surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, int(width), int(height))
         else:
@@ -521,24 +507,20 @@ class _IconBuffer:
             )
             ctx.paint()
 
-        # Scale context for icon
         ctx.scale(
             float(width) / (icon_width + padding * 2),
             float(height) / (icon_height + padding * 2),
         )
         ctx.save()
 
-        # Translate for padding
         ctx.translate(padding, padding)
 
-        # Create viewport
         viewport = Rsvg.Rectangle()
         viewport.x = 0
         viewport.y = 0
         viewport.width = icon_width
         viewport.height = icon_height
 
-        # Render main icon
         if sensitive:
             if self.alpha == 1.0:
                 handle.render_document(ctx, viewport)
@@ -553,7 +535,6 @@ class _IconBuffer:
             ctx.pop_group_to_source()
             ctx.paint_with_alpha(0.5 * self.alpha)
 
-        # Draw badge if present
         if self.badge_name:
             ctx.restore()
             ctx.translate(badge_info.attach_x, badge_info.attach_y)
@@ -609,7 +590,6 @@ class Icon(Gtk.Widget):
             width = self.get_width()
             height = self.get_height()
 
-            # Center the icon
             x = (width - surface.get_width()) / 2
             y = (height - surface.get_height()) / 2
 
@@ -625,7 +605,6 @@ class Icon(Gtk.Widget):
             finally:
                 snapshot.restore()
 
-        # Snapshot any children (e.g., attached Popovers)
         child = self.get_first_child()
         while child:
             self.snapshot_child(child, snapshot)
@@ -654,7 +633,6 @@ class Icon(Gtk.Widget):
                 child.allocate(width, height, baseline, None)
             child = child.get_next_sibling()
 
-    # Properties
     def get_icon_name(self) -> Optional[str]:
         return self._buffer.icon_name
 
@@ -681,7 +659,6 @@ class Icon(Gtk.Widget):
             self.queue_resize()
             self.queue_draw()
 
-    # Legacy aliases for compatibility
     def get_size(self) -> int:
         return self.get_pixel_size()
 
@@ -742,7 +719,6 @@ class Icon(Gtk.Widget):
         """Get size of badge icon in pixels."""
         return int(_BADGE_SIZE * self.get_pixel_size())
 
-    # GObject properties
     icon_name = GObject.Property(
         type=str, default=None, getter=get_icon_name, setter=set_icon_name
     )
@@ -834,31 +810,24 @@ class EventIcon(Icon):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        # Set up gesture handling
         self._setup_gestures()
 
-        # Set up palette invoker (restoring GTK3 behavior)
         from sugar4.graphics.palette import CursorInvoker, Palette
         self._palette_invoker = CursorInvoker()
         self._palette_invoker.attach(self)
 
     def _setup_gestures(self):
-        """Set up gesture controllers for event handling."""
-        # Click gesture
         click_gesture = Gtk.GestureClick()
         click_gesture.connect("pressed", self._on_pressed)
         click_gesture.connect("released", self._on_released)
         self.add_controller(click_gesture)
 
     def _on_pressed(self, gesture: Gtk.GestureClick, n_press: int, x: float, y: float):
-        """Handle press events."""
         self.emit("pressed", x, y)
 
     def _on_released(self, gesture: Gtk.GestureClick, n_press: int, x: float, y: float):
-        """Handle release events."""
         self.emit("released", x, y)
-        if n_press == 1:  # Single click
-            # Check if release is within widget bounds
+        if n_press == 1:
             width = self.get_width()
             height = self.get_height()
             if 0 <= x <= width and 0 <= y <= height:
@@ -883,7 +852,6 @@ class EventIcon(Icon):
         """Set cache setting."""
         self._buffer.cache = cache
 
-    # Additional properties for EventIcon
     background_color = GObject.Property(
         type=object,
         default=None,
@@ -939,19 +907,15 @@ class CanvasIcon(EventIcon):
         self._button_down = False
         self._palette_up = False
 
-        # Set up hover and focus controllers
         self._setup_state_controllers()
 
     def _setup_state_controllers(self):
-        """Set up state change controllers."""
-        # Motion controller for hover effects
         motion_controller = Gtk.EventControllerMotion()
         motion_controller.connect("enter", self._on_enter)
         motion_controller.connect("leave", self._on_leave)
         self.add_controller(motion_controller)
 
     def _on_enter(self, controller, x, y):
-        """Handle mouse enter."""
         self.set_state_flags(Gtk.StateFlags.PRELIGHT, False)
         if self._button_down:
             self.set_state_flags(Gtk.StateFlags.ACTIVE, False)
@@ -965,13 +929,11 @@ class CanvasIcon(EventIcon):
                 Gtk.StateFlags.PRELIGHT | Gtk.StateFlags.ACTIVE)
 
     def _on_pressed(self, gesture, n_press, x, y):
-        """Handle canvas press."""
         self._button_down = True
         self.set_state_flags(Gtk.StateFlags.ACTIVE, False)
         super()._on_pressed(gesture, n_press, x, y)
 
     def _on_released(self, gesture, n_press, x, y):
-        """Handle canvas release."""
         self.unset_state_flags(Gtk.StateFlags.ACTIVE)
         self._button_down = False
         super()._on_released(gesture, n_press, x, y)
@@ -990,28 +952,18 @@ class CanvasIcon(EventIcon):
         self.unset_state_flags(Gtk.StateFlags.PRELIGHT)
 
     def do_snapshot(self, snapshot):
-        """Override to render background based on state."""
-        # Get allocation and style context
         width = self.get_width()
         height = self.get_height()
 
-        # Render background based on state
         style_context = self.get_style_context()
         style_context.save()
-
-        # Add CSS class for styling
         style_context.add_class("canvas-icon")
-
-        # Render background
         snapshot.render_background(style_context, 0, 0, width, height)
-
         style_context.restore()
 
-        # Call parent to render icon
         super().do_snapshot(snapshot)
 
 
-# Simplified cell renderer for list/tree view compatibility
 class CellRendererIcon(Gtk.CellRenderer):
     """
     Icon renderer for use in list/tree views.
@@ -1162,7 +1114,6 @@ class CellRendererIcon(Gtk.CellRenderer):
         return True
 
 
-# Utility functions
 def get_icon_file_name(icon_name: str) -> Optional[str]:
     """
     Resolve icon name to file path using icon theme.
@@ -1255,14 +1206,12 @@ def get_surface(
     return buffer.get_surface()
 
 
-# Import Graphene for snapshot-based rendering operations
 try:
     gi.require_version("Graphene", "1.0")
     from gi.repository import Graphene
 except (ImportError, ValueError):
     logging.warning("Graphene not available, icon rendering may be limited")
 
-    # Provide fallback
     class _GraphenePoint:
         def init(self, x, y):
             self.x, self.y = x, y

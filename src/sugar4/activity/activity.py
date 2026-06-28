@@ -1,4 +1,4 @@
-# Copyright (C) 2006-2007 Red Hat, Inc.
+﻿# Copyright (C) 2006-2007 Red Hat, Inc.
 # Copyright (C) 2007-2009 One Laptop Per Child
 # Copyright (C) 2010 Collabora Ltd. <http://www.collabora.co.uk/>
 # Copyright (C) 2025 MostlyK
@@ -173,6 +173,7 @@ gi.require_version("Gdk", "4.0")
 gi.require_version("GLib", "2.0")
 gi.require_version("GObject", "2.0")
 gi.require_version("Gio", "2.0")
+gi.require_version("Graphene", "1.0")
 
 from gi.repository import Gdk, Gio, GLib, GObject, Graphene, Gtk
 
@@ -246,7 +247,6 @@ class _ActivitySession(GObject.GObject):
 
         if len(self._activities) == 0:
             logging.debug("Quitting the activity process.")
-            # In GTK4, we need to quit the application properly
             if self._main_loop and self._main_loop.is_running():
                 self._main_loop.quit()
             else:
@@ -367,7 +367,6 @@ class Activity(Window):
                 "gtk-font-name", "%s %f" % (style.FONT_FACE, style.FONT_SIZE)
             )
 
-        # Initialize parent Window
         Window.__init__(self, application=application)
 
         if "SUGAR_ACTIVITY_ROOT" in os.environ:
@@ -392,7 +391,6 @@ class Activity(Window):
         self._session.connect("quit-requested", self.__session_quit_requested_cb)
         self._session.connect("quit", self.__session_quit_cb)
 
-        # GTK4: Accelerator groups are handled differently
         # We'll use application accelerators instead
         self.sugar_accel_group = None
         if application:
@@ -459,7 +457,6 @@ class Activity(Window):
             self._jobject_old = self._jobject
             self._jobject = datastore.copy(self._jobject, "/")
 
-        # Set the original title again after any operations
         self._original_title = self._jobject.metadata["title"]
 
     def add_stop_button(self, button):
@@ -524,7 +521,6 @@ class Activity(Window):
             jobject.file_path = ""
 
             # Try to write to datastore
-            # NOTE: Bug on GTK3 Toolkit:
             # FIXME: We should be able to get an ID synchronously from the DS,
             # then call async the actual create.
             # http://bugs.sugarlabs.org/ticket/2169
@@ -920,7 +916,6 @@ class Activity(Window):
             if renderer is None:
                 return None
 
-            # GTK4: WidgetPaintable captures any widget's current
             # rendered state, including all children.
             paintable = Gtk.WidgetPaintable.new(self.canvas)
             snapshot = Gtk.Snapshot()
@@ -1023,7 +1018,6 @@ class Activity(Window):
 
         preview = self.get_preview()
         if preview is not None:
-            # In GTK4, we handle binary data differently
             self.metadata["preview"] = preview
 
         if not self.metadata.get("activity_id", ""):
@@ -1269,7 +1263,6 @@ class Activity(Window):
             Gtk.ResponseType.CANCEL, _("Cancel"), Icon(icon_name="dialog-cancel")
         )
 
-        # GTK4: Accelerators are handled differently
         if self.sugar_accel_group and hasattr(
             self.sugar_accel_group, "set_accels_for_action"
         ):
@@ -1463,7 +1456,6 @@ class Activity(Window):
             self.unbusy()
         """
         if self._busy_count == 0:
-            # GTK4: Different cursor handling
             cursor = Gdk.Cursor.new_from_name("wait", None)
             self.set_cursor(cursor)
         self._busy_count += 1

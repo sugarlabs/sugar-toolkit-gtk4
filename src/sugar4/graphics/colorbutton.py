@@ -1,4 +1,4 @@
-# Copyright (C) 2007, Red Hat, Inc.
+﻿# Copyright (C) 2007, Red Hat, Inc.
 # Copyright (C) 2008, Benjamin Berg <benjamin@sipsolutions.net>
 # Copyright (C) 2025 MostlyK
 #
@@ -58,7 +58,6 @@ class _ColorButton(Gtk.Button):
 
     def __init__(self, **kwargs):
         self._title = _("Choose a color")
-        # GTK4: Gdk.Color → Gdk.RGBA
         self._color = Gdk.RGBA()
         self._color.red = 0.0
         self._color.green = 0.0
@@ -76,7 +75,6 @@ class _ColorButton(Gtk.Button):
         GObject.GObject.__init__(self, **kwargs)
 
         # FIXME Drag and drop is not working, SL #3796
-        # GTK4: Drag and drop API changed significantly
         # For now, disable drag and drop
         """
         if self._accept_drag:
@@ -84,7 +82,6 @@ class _ColorButton(Gtk.Button):
             pass
         """
 
-        # GTK4: set_image → set_child
         self._preview.fill_color = get_svg_color_string(self._color)
         self._preview.stroke_color = self._get_fg_style_color_str()
         self.set_child(self._preview)
@@ -116,7 +113,6 @@ class _ColorButton(Gtk.Button):
 
     def _get_fg_style_color_str(self):
         context = self.get_style_context()
-        # GTK4: get_color with StateType -> get_color with state
         fg_color = context.get_color()
         # the color components are stored as float values between 0.0 and 1.0
         return "#%.2X%.2X%.2X" % (
@@ -269,24 +265,20 @@ class _ColorPalette(Palette):
 
         self._picker_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 
-        # GTK4: Gtk.Alignment removed, use margins instead
         alignment = Gtk.Box()
         alignment.set_margin_start(style.DEFAULT_SPACING)
         alignment.set_margin_end(style.DEFAULT_SPACING)
         alignment.append(self._picker_hbox)
         self.set_content(alignment)
 
-        # GTK4: Gtk.Table → Gtk.Grid
         self._swatch_tray = Gtk.Grid()
 
         self._picker_hbox.append(self._swatch_tray)
-        # GTK4: Gtk.VSeparator → Gtk.Separator with orientation
         separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
         self._picker_hbox.append(separator)
         self._picker_hbox.set_margin_start(style.DEFAULT_SPACING)
         self._picker_hbox.set_margin_end(style.DEFAULT_SPACING)
 
-        # GTK4: Gtk.Table → Gtk.Grid
         self._chooser_table = Gtk.Grid()
         self._chooser_table.set_column_spacing(style.DEFAULT_PADDING)
 
@@ -314,7 +306,6 @@ class _ColorPalette(Palette):
             scale.set_value(self._color.blue)
 
         scale.connect("value-changed", self.__scale_value_changed_cb, color)
-        # GTK4: Grid uses attach(child, column, row, width, height)
         self._chooser_table.attach(label, 0, row, 1, 1)
         self._chooser_table.attach(scale, 1, row, 1, 1)
 
@@ -356,7 +347,6 @@ class _ColorPalette(Palette):
                 accept_drag=False,
                 icon_size=style.STANDARD_ICON_SIZE,
             )
-            # GTK4: ReliefStyle removed, buttons are flat by default
             self._swatch_tray.attach(button, i % rows, i // rows, 1, 1)
             button.connect("clicked", self.__swatch_button_clicked_cb)
             i += 1
@@ -420,7 +410,6 @@ class _ColorPalette(Palette):
 
 def _add_accelerator(tool_button):
     """GTK4: Accelerators are now handled at the application level."""
-    # In GTK4, accelerators are set via Gtk.Application.set_accels_for_action()
     pass
 
 
@@ -447,7 +436,6 @@ class ColorToolButton(Gtk.Box):
 
         GObject.GObject.__init__(self, **kwargs)
 
-        # GTK4: Create the button and add it to the box
         self._color_button = _ColorButton(icon_name=icon_name, has_invoker=False)
         self.append(self._color_button)
 
