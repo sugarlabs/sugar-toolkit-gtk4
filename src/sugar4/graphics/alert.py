@@ -101,19 +101,10 @@ class Alert(Gtk.Box):
     }
 
     def __init__(self, **kwargs):
-        super().__init__(orientation=Gtk.Orientation.HORIZONTAL, **kwargs)
-
         self._title = None
         self._msg = None
         self._icon = None
         self._buttons = {}
-
-        # Set margin and spacing (replaces border_width)
-        self.set_margin_top(style.DEFAULT_SPACING)
-        self.set_margin_bottom(style.DEFAULT_SPACING)
-        self.set_margin_start(style.DEFAULT_SPACING)
-        self.set_margin_end(style.DEFAULT_SPACING)
-        self.set_spacing(style.DEFAULT_SPACING)
 
         self._msg_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self._title_label = Gtk.Label()
@@ -127,12 +118,22 @@ class Alert(Gtk.Box):
         self._msg_label.set_valign(Gtk.Align.CENTER)
         self._msg_label.set_ellipsize(style.ELLIPSIZE_MODE_DEFAULT)
         self._msg_box.append(self._msg_label)
-        self.append(self._msg_box)
 
         self._buttons_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self._buttons_box.set_halign(Gtk.Align.END)
         self._buttons_box.set_spacing(style.DEFAULT_SPACING)
         self._buttons_box.set_hexpand(True)
+
+        super().__init__(orientation=Gtk.Orientation.HORIZONTAL, **kwargs)
+
+        # Set margin and spacing (replaces border_width)
+        self.set_margin_top(style.DEFAULT_SPACING)
+        self.set_margin_bottom(style.DEFAULT_SPACING)
+        self.set_margin_start(style.DEFAULT_SPACING)
+        self.set_margin_end(style.DEFAULT_SPACING)
+        self.set_spacing(style.DEFAULT_SPACING)
+
+        self.append(self._msg_box)
         self.append(self._buttons_box)
 
         self.add_css_class("sugar-alert")
