@@ -103,7 +103,7 @@ autodoc_mock_imports = [
     "dbus",
     "SimpleHTTPServer",
     "socketserver",
-    "sugar3",
+    "sugar4",
     "cairo",
 ]
 

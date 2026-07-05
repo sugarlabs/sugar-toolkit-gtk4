@@ -18,508 +18,508 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: src/sugar3/activity/activity.py:500
+#: src/sugar4/activity/activity.py:500
 #, python-format
 msgid "%s Activity"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1150
+#: src/sugar4/activity/activity.py:1150
 msgid "Keep error"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1151
+#: src/sugar4/activity/activity.py:1151
 msgid "Keep error: all changes will be lost"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1154
+#: src/sugar4/activity/activity.py:1154
 msgid "Don't stop"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1158
+#: src/sugar4/activity/activity.py:1158
 msgid "Stop anyway"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1192 src/sugar3/activity/widgets.py:89
+#: src/sugar4/activity/activity.py:1192 src/sugar4/activity/widgets.py:89
 msgid "Stop"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1193
+#: src/sugar4/activity/activity.py:1193
 msgid "Stop: name your journal entry"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1212 src/sugar3/graphics/alert.py:309
-#: src/sugar3/graphics/alert.py:477
+#: src/sugar4/activity/activity.py:1212 src/sugar4/graphics/alert.py:309
+#: src/sugar4/graphics/alert.py:477
 msgid "Cancel"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1216
+#: src/sugar4/activity/activity.py:1216
 msgid "Cancel stop and continue the activity"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1253
+#: src/sugar4/activity/activity.py:1253
 msgid "Save new"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1254
+#: src/sugar4/activity/activity.py:1254
 msgid "Save a new journal entry"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1257
+#: src/sugar4/activity/activity.py:1257
 msgid "Save"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1258
+#: src/sugar4/activity/activity.py:1258
 msgid "Save into the old journal entry"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1264
+#: src/sugar4/activity/activity.py:1264
 msgid "Erase changes"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1265
+#: src/sugar4/activity/activity.py:1265
 msgid "Erase what you have done, and leave your old journal entry unchanged"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1268
+#: src/sugar4/activity/activity.py:1268
 msgid "Erase"
 msgstr ""
 
-#: src/sugar3/activity/activity.py:1269
+#: src/sugar4/activity/activity.py:1269
 msgid "Erase what you have done, and avoid making a journal entry"
 msgstr ""
 
-#: src/sugar3/activity/widgets.py:102
+#: src/sugar4/activity/widgets.py:102
 msgid "Undo"
 msgstr ""
 
-#: src/sugar3/activity/widgets.py:110
+#: src/sugar4/activity/widgets.py:110
 msgid "Redo"
 msgstr ""
 
-#: src/sugar3/activity/widgets.py:118
+#: src/sugar4/activity/widgets.py:118
 msgid "Copy"
 msgstr ""
 
-#: src/sugar3/activity/widgets.py:126
+#: src/sugar4/activity/widgets.py:126
 msgid "Paste"
 msgstr ""
 
-#: src/sugar3/activity/widgets.py:137
+#: src/sugar4/activity/widgets.py:137
 msgid "Private"
 msgstr ""
 
-#: src/sugar3/activity/widgets.py:144
+#: src/sugar4/activity/widgets.py:144
 msgid "My Neighborhood"
 msgstr ""
 
-#: src/sugar3/activity/widgets.py:251
+#: src/sugar4/activity/widgets.py:251
 msgid "Description"
 msgstr ""
 
-#: src/sugar3/graphics/alert.py:313 src/sugar3/graphics/alert.py:354
-#: src/sugar3/graphics/alert.py:403 src/sugar3/graphics/alert.py:522
+#: src/sugar4/graphics/alert.py:313 src/sugar4/graphics/alert.py:354
+#: src/sugar4/graphics/alert.py:403 src/sugar4/graphics/alert.py:522
 msgid "Ok"
 msgstr ""
 
-#: src/sugar3/graphics/alert.py:474
+#: src/sugar4/graphics/alert.py:474
 msgid "Continue"
 msgstr ""
 
-#: src/sugar3/graphics/colorbutton.py:61
+#: src/sugar4/graphics/colorbutton.py:61
 msgid "Choose a color"
 msgstr ""
 
-#: src/sugar3/graphics/colorbutton.py:307
+#: src/sugar4/graphics/colorbutton.py:307
 msgid "Red"
 msgstr ""
 
-#: src/sugar3/graphics/colorbutton.py:309
+#: src/sugar4/graphics/colorbutton.py:309
 msgid "Green"
 msgstr ""
 
-#: src/sugar3/graphics/colorbutton.py:311
+#: src/sugar4/graphics/colorbutton.py:311
 msgid "Blue"
 msgstr ""
 
-#: src/sugar3/mime.py:62
+#: src/sugar4/mime.py:62
 msgid "Text"
 msgstr ""
 
-#: src/sugar3/mime.py:69
+#: src/sugar4/mime.py:69
 msgid "Image"
 msgstr ""
 
-#: src/sugar3/mime.py:74
+#: src/sugar4/mime.py:74
 msgid "Audio"
 msgstr ""
 
-#: src/sugar3/mime.py:81
+#: src/sugar4/mime.py:81
 msgid "Video"
 msgstr ""
 
-#: src/sugar3/mime.py:92
+#: src/sugar4/mime.py:92
 msgid "Link"
 msgstr ""
 
-#: src/sugar3/mime.py:97
+#: src/sugar4/mime.py:97
 msgid "Bundle"
 msgstr ""
 
-#: src/sugar3/speech.py:59
+#: src/sugar4/speech.py:59
 msgid "Afrikaans"
 msgstr ""
 
-#: src/sugar3/speech.py:61
+#: src/sugar4/speech.py:61
 msgid "Aragonese"
 msgstr ""
 
-#: src/sugar3/speech.py:63
+#: src/sugar4/speech.py:63
 msgid "Bulgarian"
 msgstr ""
 
-#: src/sugar3/speech.py:65
+#: src/sugar4/speech.py:65
 msgid "Bosnian"
 msgstr ""
 
-#: src/sugar3/speech.py:67
+#: src/sugar4/speech.py:67
 msgid "Catalan"
 msgstr ""
 
-#: src/sugar3/speech.py:69
+#: src/sugar4/speech.py:69
 msgid "Czech"
 msgstr ""
 
-#: src/sugar3/speech.py:71
+#: src/sugar4/speech.py:71
 msgid "Welsh"
 msgstr ""
 
-#: src/sugar3/speech.py:73
+#: src/sugar4/speech.py:73
 msgid "Danish"
 msgstr ""
 
-#: src/sugar3/speech.py:75
+#: src/sugar4/speech.py:75
 msgid "German"
 msgstr ""
 
-#: src/sugar3/speech.py:77
+#: src/sugar4/speech.py:77
 msgid "Greek"
 msgstr ""
 
-#: src/sugar3/speech.py:78
+#: src/sugar4/speech.py:78
 msgid "English"
 msgstr ""
 
-#: src/sugar3/speech.py:80
+#: src/sugar4/speech.py:80
 msgid "English Britain"
 msgstr ""
 
-#: src/sugar3/speech.py:82
+#: src/sugar4/speech.py:82
 msgid "English scottish"
 msgstr ""
 
-#: src/sugar3/speech.py:83
+#: src/sugar4/speech.py:83
 msgid "English-north"
 msgstr ""
 
-#: src/sugar3/speech.py:85
+#: src/sugar4/speech.py:85
 msgid "English_rp"
 msgstr ""
 
-#: src/sugar3/speech.py:87
+#: src/sugar4/speech.py:87
 msgid "English_wmids"
 msgstr ""
 
-#: src/sugar3/speech.py:89
+#: src/sugar4/speech.py:89
 msgid "English USA"
 msgstr ""
 
-#: src/sugar3/speech.py:91
+#: src/sugar4/speech.py:91
 msgid "English West Indies"
 msgstr ""
 
-#: src/sugar3/speech.py:93
+#: src/sugar4/speech.py:93
 msgid "Esperanto"
 msgstr ""
 
-#: src/sugar3/speech.py:95
+#: src/sugar4/speech.py:95
 msgid "Spanish"
 msgstr ""
 
-#: src/sugar3/speech.py:96
+#: src/sugar4/speech.py:96
 msgid "Spanish latin american"
 msgstr ""
 
-#: src/sugar3/speech.py:98
+#: src/sugar4/speech.py:98
 msgid "Estonian"
 msgstr ""
 
-#: src/sugar3/speech.py:100
+#: src/sugar4/speech.py:100
 msgid "Farsi"
 msgstr ""
 
-#: src/sugar3/speech.py:102
+#: src/sugar4/speech.py:102
 msgid "Farsi-pinglish"
 msgstr ""
 
-#: src/sugar3/speech.py:104
+#: src/sugar4/speech.py:104
 msgid "Finnish"
 msgstr ""
 
-#: src/sugar3/speech.py:106
+#: src/sugar4/speech.py:106
 msgid "French belgium"
 msgstr ""
 
-#: src/sugar3/speech.py:108
+#: src/sugar4/speech.py:108
 msgid "French"
 msgstr ""
 
-#: src/sugar3/speech.py:110
+#: src/sugar4/speech.py:110
 msgid "Irish-gaeilge"
 msgstr ""
 
-#: src/sugar3/speech.py:112
+#: src/sugar4/speech.py:112
 msgid "Greek-ancient"
 msgstr ""
 
-#: src/sugar3/speech.py:114
+#: src/sugar4/speech.py:114
 msgid "Hindi"
 msgstr ""
 
-#: src/sugar3/speech.py:116
+#: src/sugar4/speech.py:116
 msgid "Croatian"
 msgstr ""
 
-#: src/sugar3/speech.py:118
+#: src/sugar4/speech.py:118
 msgid "Hungarian"
 msgstr ""
 
-#: src/sugar3/speech.py:120
+#: src/sugar4/speech.py:120
 msgid "Armenian"
 msgstr ""
 
-#: src/sugar3/speech.py:122
+#: src/sugar4/speech.py:122
 msgid "Armenian (west)"
 msgstr ""
 
-#: src/sugar3/speech.py:124
+#: src/sugar4/speech.py:124
 msgid "Indonesian"
 msgstr ""
 
-#: src/sugar3/speech.py:126
+#: src/sugar4/speech.py:126
 msgid "Icelandic"
 msgstr ""
 
-#: src/sugar3/speech.py:128
+#: src/sugar4/speech.py:128
 msgid "Italian"
 msgstr ""
 
-#: src/sugar3/speech.py:130
+#: src/sugar4/speech.py:130
 msgid "Lojban"
 msgstr ""
 
-#: src/sugar3/speech.py:132
+#: src/sugar4/speech.py:132
 msgid "Georgian"
 msgstr ""
 
-#: src/sugar3/speech.py:134
+#: src/sugar4/speech.py:134
 msgid "Kannada"
 msgstr ""
 
-#: src/sugar3/speech.py:136
+#: src/sugar4/speech.py:136
 msgid "Kurdish"
 msgstr ""
 
-#: src/sugar3/speech.py:138
+#: src/sugar4/speech.py:138
 msgid "Latin"
 msgstr ""
 
-#: src/sugar3/speech.py:140
+#: src/sugar4/speech.py:140
 msgid "Lithuanian"
 msgstr ""
 
-#: src/sugar3/speech.py:142
+#: src/sugar4/speech.py:142
 msgid "Latvian"
 msgstr ""
 
-#: src/sugar3/speech.py:144
+#: src/sugar4/speech.py:144
 msgid "Macedonian"
 msgstr ""
 
-#: src/sugar3/speech.py:146
+#: src/sugar4/speech.py:146
 msgid "Malayalam"
 msgstr ""
 
-#: src/sugar3/speech.py:148
+#: src/sugar4/speech.py:148
 msgid "Malay"
 msgstr ""
 
-#: src/sugar3/speech.py:150
+#: src/sugar4/speech.py:150
 msgid "Nepali"
 msgstr ""
 
-#: src/sugar3/speech.py:152
+#: src/sugar4/speech.py:152
 msgid "Dutch"
 msgstr ""
 
-#: src/sugar3/speech.py:154
+#: src/sugar4/speech.py:154
 msgid "Norwegian"
 msgstr ""
 
-#: src/sugar3/speech.py:156
+#: src/sugar4/speech.py:156
 msgid "Punjabi"
 msgstr ""
 
-#: src/sugar3/speech.py:158
+#: src/sugar4/speech.py:158
 msgid "Polish"
 msgstr ""
 
-#: src/sugar3/speech.py:160
+#: src/sugar4/speech.py:160
 msgid "Portuguese (Brazil)"
 msgstr ""
 
-#: src/sugar3/speech.py:162
+#: src/sugar4/speech.py:162
 msgid "Portuguese (Portugal)"
 msgstr ""
 
-#: src/sugar3/speech.py:164
+#: src/sugar4/speech.py:164
 msgid "Romanian"
 msgstr ""
 
-#: src/sugar3/speech.py:166
+#: src/sugar4/speech.py:166
 msgid "Russian"
 msgstr ""
 
-#: src/sugar3/speech.py:168
+#: src/sugar4/speech.py:168
 msgid "Slovak"
 msgstr ""
 
-#: src/sugar3/speech.py:170
+#: src/sugar4/speech.py:170
 msgid "Albanian"
 msgstr ""
 
-#: src/sugar3/speech.py:172
+#: src/sugar4/speech.py:172
 msgid "Serbian"
 msgstr ""
 
-#: src/sugar3/speech.py:174
+#: src/sugar4/speech.py:174
 msgid "Swedish"
 msgstr ""
 
-#: src/sugar3/speech.py:176
+#: src/sugar4/speech.py:176
 msgid "Swahili"
 msgstr ""
 
-#: src/sugar3/speech.py:178
+#: src/sugar4/speech.py:178
 msgid "Tamil"
 msgstr ""
 
-#: src/sugar3/speech.py:180
+#: src/sugar4/speech.py:180
 msgid "Turkish"
 msgstr ""
 
-#: src/sugar3/speech.py:182
+#: src/sugar4/speech.py:182
 msgid "Vietnam"
 msgstr ""
 
-#: src/sugar3/speech.py:183
+#: src/sugar4/speech.py:183
 msgid "Vietnam_hue"
 msgstr ""
 
-#: src/sugar3/speech.py:184
+#: src/sugar4/speech.py:184
 msgid "Vietnam_sgn"
 msgstr ""
 
-#: src/sugar3/speech.py:186
+#: src/sugar4/speech.py:186
 msgid "Mandarin"
 msgstr ""
 
-#: src/sugar3/speech.py:188
+#: src/sugar4/speech.py:188
 msgid "Cantonese"
 msgstr ""
 
-#: src/sugar3/util.py:225
+#: src/sugar4/util.py:225
 msgid " and "
 msgstr ""
 
-#: src/sugar3/util.py:226
+#: src/sugar4/util.py:226
 msgid ", "
 msgstr ""
 
 #. TRANS: Indicating something that just happened, eg. "just now", "moments ago"
-#: src/sugar3/util.py:229
+#: src/sugar4/util.py:229
 msgid "Seconds ago"
 msgstr ""
 
 #. TRANS: Indicating time passed, eg. "[10 day, 5 hours] ago",
 #. "[2 minutes] in the past", or "[3 years, 1 month] earlier"
-#: src/sugar3/util.py:233
+#: src/sugar4/util.py:233
 #, python-format
 msgid "%s ago"
 msgstr ""
 
 #. TRANS: Relative dates (eg. 1 month and 5 days).
-#: src/sugar3/util.py:248
+#: src/sugar4/util.py:248
 #, python-format
 msgid "%d year"
 msgid_plural "%d years"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/sugar3/util.py:249
+#: src/sugar4/util.py:249
 #, python-format
 msgid "%d month"
 msgid_plural "%d months"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/sugar3/util.py:250
+#: src/sugar4/util.py:250
 #, python-format
 msgid "%d week"
 msgid_plural "%d weeks"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/sugar3/util.py:251
+#: src/sugar4/util.py:251
 #, python-format
 msgid "%d day"
 msgid_plural "%d days"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/sugar3/util.py:252
+#: src/sugar4/util.py:252
 #, python-format
 msgid "%d hour"
 msgid_plural "%d hours"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/sugar3/util.py:253
+#: src/sugar4/util.py:253
 #, python-format
 msgid "%d minute"
 msgid_plural "%d minutes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/sugar3/util.py:355
+#: src/sugar4/util.py:355
 msgid "Empty"
 msgstr ""
 
-#: src/sugar3/util.py:357
+#: src/sugar4/util.py:357
 #, python-format
 msgid "%d B"
 msgstr ""
 
-#: src/sugar3/util.py:359
+#: src/sugar4/util.py:359
 #, python-format
 msgid "%d KB"
 msgstr ""
 
-#: src/sugar3/util.py:361
+#: src/sugar4/util.py:361
 #, python-format
 msgid "%d MB"
 msgstr ""
 
-#: src/sugar3/util.py:363
+#: src/sugar4/util.py:363
 #, python-format
 msgid "%d GB"
 msgstr ""

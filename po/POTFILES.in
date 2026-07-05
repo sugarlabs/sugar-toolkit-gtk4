@@ -1,8 +1,8 @@
-src/sugar3/activity/activity.py
-src/sugar3/activity/widgets.py
-src/sugar3/graphics/alert.py
-src/sugar3/graphics/colorbutton.py
-src/sugar3/graphics/objectchooser.py
-src/sugar3/util.py
-src/sugar3/mime.py
-src/sugar3/speech.py
+src/sugar4/activity/activity.py
+src/sugar4/activity/widgets.py
+src/sugar4/graphics/alert.py
+src/sugar4/graphics/colorbutton.py
+src/sugar4/graphics/objectchooser.py
+src/sugar4/util.py
+src/sugar4/mime.py
+src/sugar4/speech.py

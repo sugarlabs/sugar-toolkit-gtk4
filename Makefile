@@ -6,8 +6,8 @@ help:
 	@echo 'Targets:'
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-install:  ## Install package in development mode
-	pip install -e .
+install:  ## Install package
+	pip install --root-user-action=ignore .
 
 test:  ## Run all tests
 	pytest tests/ -v
