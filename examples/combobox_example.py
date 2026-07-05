@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk, GObject
+from gi.repository import Gtk
 
 from sugar4.graphics.combobox import ComboBox
 
@@ -97,7 +97,9 @@ class ComboBoxExample(Gtk.ApplicationWindow):
         # Create combo with icons
         self.icon_combo = ComboBox()
         try:
-            self.icon_combo.append_item("new", "New Document", icon_name="document-new")
+            self.icon_combo.append_item(
+                "new", "New Document", icon_name="document-new"
+            )
             self.icon_combo.append_item(
                 "open", "Open Document", icon_name="document-open"
             )
@@ -233,7 +235,8 @@ class ComboBoxExample(Gtk.ApplicationWindow):
         value = combo.get_value()
         if value and isinstance(value, dict):
             status_text = (
-                f"Person: {value['name']}, Age: {value['age']}, Role: {value['role']}"
+                f"Person: {value['name']}, Age: {value['age']}, "
+                f"Role: {value['role']}"
             )
             self.status_label.set_text(status_text)
 
