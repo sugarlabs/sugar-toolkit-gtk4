@@ -217,4 +217,4 @@ def main():
         module.start()
 
     # Run the GTK application
-    sys.exit(app.run(sys.argv))
+    sys.exit(app.run([sys.argv[0]]))
