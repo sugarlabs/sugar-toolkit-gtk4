@@ -1,4 +1,4 @@
-﻿# Copyright (C) 2007, Red Hat, Inc.
+# Copyright (C) 2007, Red Hat, Inc.
 # Copyright (C) 2008, One Laptop Per Child
 # Copyright (C) 2025 MostlyK
 #
@@ -154,7 +154,7 @@ class ToolButton(Gtk.Button):
         if self._accelerator:
             self.set_accelerator(self._accelerator)
 
-        self.connect("destroy", self.__destroy_cb)
+        self.connect("unrealize", self.__destroy_cb)
         self.connect("clicked", self.__clicked_cb)
 
         self._apply_toolbar_button_css()
@@ -198,17 +198,13 @@ class ToolButton(Gtk.Button):
             self._palette_invoker = None
 
     def __clicked_cb(self, button):
-        print(f"ToolButton.__clicked_cb: 'clicked' signal received for {button}")
-        # Hide tooltip if needed
         if self._hide_tooltip_on_click and self.get_palette():
             palette = self.get_palette()
             if palette is not None:
                 if palette.is_up():
                     palette.popdown(immediate=True)
-        # Explicitly trigger palette invoker toggle if present
         invoker = self.get_palette_invoker()
         if invoker and getattr(invoker, "_toggle_palette", False):
-            print("ToolButton.__clicked_cb: calling invoker.notify_toggle_state()")
             invoker.notify_toggle_state()
 
     def set_tooltip(self, tooltip: Optional[str]):

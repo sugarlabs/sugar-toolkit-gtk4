@@ -1,4 +1,4 @@
-﻿# Copyright (C) 2007, Red Hat, Inc.
+# Copyright (C) 2007, Red Hat, Inc.
 # Copyright (C) 2012, Daniel Francis
 # Copyright (C) 2025 MostlyK
 #
@@ -110,7 +110,7 @@ class ToggleToolButton(Gtk.ToggleButton):
         # Connect to root changes and map signal to setup accelerator
         self.connect("notify::root", _on_root_changed)
         self.connect("map", self._on_mapped)
-        self.connect("destroy", self.__destroy_cb)
+        self.connect("unrealize", self.__destroy_cb)
 
         self._apply_toolbar_button_css()
 

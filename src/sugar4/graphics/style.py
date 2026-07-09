@@ -198,15 +198,11 @@ class Color:
 
     def get_gdk_color(self):
         """
-        Returns GDK standard color (deprecated in GTK4).
-        Maintained for compatibility.
+        Returns GDK standard color (removed in GTK4).
+        Maintained for API compatibility — always returns None.
+        Use get_gdk_rgba() instead.
         """
-        if not GTK_AVAILABLE:
-            return None
-        logging.warning("get_gdk_color is deprecated in GTK4, use get_gdk_rgba instead")
-        return Gdk.Color(
-            int(self._r * 65535), int(self._g * 65535), int(self._b * 65535)
-        )
+        return None
 
     def get_html(self) -> str:
         """
