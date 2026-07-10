@@ -73,6 +73,13 @@ class _TrayViewport(Gtk.ScrolledWindow):
             self.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
         self.set_has_frame(False)
+        self.set_propagate_natural_height(False)
+        self.set_propagate_natural_width(False)
+
+        if self.orientation == Gtk.Orientation.HORIZONTAL:
+            self.set_min_content_height(GRID_CELL_SIZE)
+        else:
+            self.set_min_content_width(GRID_CELL_SIZE)
 
         # using Box instead of Toolbar for GTK4
         self.traybar = Gtk.Box(orientation=orientation)

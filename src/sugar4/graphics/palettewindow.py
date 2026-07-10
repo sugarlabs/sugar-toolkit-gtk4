@@ -208,16 +208,24 @@ class _PaletteMenuWidget(Gtk.Popover):
             elif hasattr(self._invoker, "_tree_view") and self._invoker._tree_view is not None:
                 parent_widget = self._invoker._tree_view
 
-            if parent_widget is not None and not self.get_parent():
-                try:
-                    # PyGObject requires explicit Gtk.Widget call for Popover subclasses
-                    Gtk.Widget.set_parent(self, parent_widget)
-                    parent_widget.connect(
-                        'destroy',
-                        lambda w: self.unparent() if self.get_parent() else None
-                    )
-                except Exception as e:
-                    logging.warning("set_parent failed on %s: %s", parent_widget, e)
+            if parent_widget is not None:
+                native = parent_widget.get_native()
+                if native and native.get_surface():
+                    current_parent = self.get_parent()
+                    if current_parent is not None and current_parent is not parent_widget:
+                        self.unparent()
+                        current_parent = None
+                    if current_parent is None:
+                        try:
+                            Gtk.Widget.set_parent(self, parent_widget)
+                            parent_widget.connect(
+                                'destroy',
+                                lambda w: self.unparent() if self.get_parent() else None
+                            )
+                        except Exception as e:
+                            logging.warning("set_parent failed on %s: %s", parent_widget, e)
+                else:
+                    parent_widget = None
 
         if not self.get_parent():
             logging.warning("Palette popup failed: No parent widget. parent_widget was %s, invoker was %s", parent_widget if 'parent_widget' in locals() else 'Not evaluated', self._invoker)
@@ -468,16 +476,24 @@ class _PaletteWindowWidget(Gtk.Popover):
             elif hasattr(self._invoker, "_tree_view") and self._invoker._tree_view is not None:
                 parent_widget = self._invoker._tree_view
 
-            if parent_widget is not None and not self.get_parent():
-                try:
-                    # PyGObject requires explicit Gtk.Widget call for Popover subclasses
-                    Gtk.Widget.set_parent(self, parent_widget)
-                    parent_widget.connect(
-                        'destroy',
-                        lambda w: self.unparent() if self.get_parent() else None
-                    )
-                except Exception as e:
-                    logging.warning("set_parent failed on %s: %s", parent_widget, e)
+            if parent_widget is not None:
+                native = parent_widget.get_native()
+                if native and native.get_surface():
+                    current_parent = self.get_parent()
+                    if current_parent is not None and current_parent is not parent_widget:
+                        self.unparent()
+                        current_parent = None
+                    if current_parent is None:
+                        try:
+                            Gtk.Widget.set_parent(self, parent_widget)
+                            parent_widget.connect(
+                                'destroy',
+                                lambda w: self.unparent() if self.get_parent() else None
+                            )
+                        except Exception as e:
+                            logging.warning("set_parent failed on %s: %s", parent_widget, e)
+                else:
+                    parent_widget = None
 
         if not self.get_parent():
             logging.warning("Palette popup failed: No parent widget.")
