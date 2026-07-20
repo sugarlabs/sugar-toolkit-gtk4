@@ -355,21 +355,20 @@ class _PaletteWindowWidget(Gtk.Popover):
 
         self._palette = palette
 
-        # Apply palette styling
         self.add_css_class("palette")
         self.add_css_class("palette-popover")
         self.set_has_arrow(False)
+        self.set_autohide(False)
 
         self._old_alloc = None
         self._invoker = None
         self._should_accept_focus = True
-        
+
         self._entered = False
         self._mouse_in_palette = False
         self._mouse_in_invoker = False
         self._up = False
 
-        # Set up event controllers for GTK4
         self._motion_controller = Gtk.EventControllerMotion()
         self._motion_controller.connect("enter", self._enter_notify_cb)
         self._motion_controller.connect("leave", self._leave_notify_cb)
@@ -465,8 +464,6 @@ class _PaletteWindowWidget(Gtk.Popover):
             parent_widget = None
             if hasattr(self._invoker, "get_widget"):
                 parent_widget = self._invoker.get_widget()
-            elif hasattr(self._invoker, "parent") and self._invoker.parent is not None:
-                parent_widget = self._invoker.parent
             elif isinstance(self._invoker, Gtk.Widget):
                 parent_widget = self._invoker
             elif hasattr(self._invoker, "_tool") and self._invoker._tool is not None:
@@ -486,10 +483,6 @@ class _PaletteWindowWidget(Gtk.Popover):
                     if current_parent is None:
                         try:
                             Gtk.Widget.set_parent(self, parent_widget)
-                            parent_widget.connect(
-                                'destroy',
-                                lambda w: self.unparent() if self.get_parent() else None
-                            )
                         except Exception as e:
                             logging.warning("set_parent failed on %s: %s", parent_widget, e)
                 else:
@@ -515,6 +508,7 @@ class _PaletteWindowWidget(Gtk.Popover):
 
         super().popup()
         self._up = True
+
 
     def popdown(self):
         """Hide the window."""
