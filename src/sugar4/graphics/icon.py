@@ -40,6 +40,7 @@ Classes:
     get_icon_state: Utility function to get state-based icon names
 """
 
+import io
 import re
 import logging
 import os
@@ -56,6 +57,19 @@ from gi.repository import GLib, GObject, Gtk, Gdk, GdkPixbuf, Rsvg
 import cairo
 
 from sugar4.graphics.xocolor import XoColor
+
+
+def _pixbuf_to_cairo_surface(pixbuf: GdkPixbuf.Pixbuf) -> Optional[cairo.ImageSurface]:
+    """Convert GdkPixbuf to cairo ImageSurface without Gdk.cairo_set_source_pixbuf."""
+    if pixbuf is None:
+        return None
+    try:
+        success, buffer = pixbuf.save_to_bufferv("png", [], [])
+        if success and buffer:
+            return cairo.ImageSurface.create_from_png(io.BytesIO(buffer))
+    except Exception as e:
+        logging.error("Failed to convert pixbuf to cairo surface: %s", e)
+    return None
 
 
 class _LRU:
@@ -348,8 +362,9 @@ class _IconBuffer:
                 icon_width = pixbuf.get_width()
                 icon_height = pixbuf.get_height()
 
+                pb_surface = _pixbuf_to_cairo_surface(pixbuf)
                 context.scale(float(size) / icon_width, float(size) / icon_height)
-                Gdk.cairo_set_source_pixbuf(context, pixbuf, 0, 0)
+                context.set_source_surface(pb_surface, 0, 0)
 
                 if sensitive:
                     context.paint()
@@ -441,7 +456,8 @@ class _IconBuffer:
         x = (width / scale - pb_width) / 2
         y = (height / scale - pb_height) / 2
 
-        Gdk.cairo_set_source_pixbuf(ctx, pixbuf, x, y)
+        pb_surface = _pixbuf_to_cairo_surface(pixbuf)
+        ctx.set_source_surface(pb_surface, x, y)
 
         if sensitive:
             if self.alpha == 1.0:

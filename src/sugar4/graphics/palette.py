@@ -1,4 +1,4 @@
-﻿# Copyright (C) 2007, Eduardo Silva <edsiper@gmail.com>
+# Copyright (C) 2007, Eduardo Silva <edsiper@gmail.com>
 # Copyright (C) 2008, One Laptop Per Child
 # Copyright (C) 2009, Tomeu Vizoso
 # Copyright (C) 2011, Benjamin Berg <benjamin@sipsolutions.net>
@@ -235,12 +235,11 @@ class Palette(PaletteWindow):
 
     def _setup_widget(self):
         super()._setup_widget()
-        if hasattr(self._widget, "connect") and GObject.signal_lookup("destroy", self._widget):
-            self._widget.connect("destroy", self.__destroy_cb)
+        if hasattr(self._widget, "connect"):
+            self._widget.connect("unrealize", self.__destroy_cb)
 
-    def __destroy_cb(self, palette):
+    def __destroy_cb(self, widget):
         self.popdown(immediate=True)
-        # Break the reference cycle to help with garbage collection
         self._widget = None
 
     def __notify_invoker_cb(self, palette, pspec):
