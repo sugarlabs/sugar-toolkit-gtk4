@@ -341,7 +341,6 @@ class _PaletteMenuWidget(Gtk.Popover):
 
 
 class _PaletteWindowWidget(Gtk.Popover):
-    """Palette window widget with modern event handling, inheriting from Popover."""
 
     __gtype_name__ = "SugarPaletteWindowWidget"
 
@@ -385,7 +384,6 @@ class _PaletteWindowWidget(Gtk.Popover):
         rect.width = self.get_width()
         rect.height = self.get_height()
         try:
-            # Attempt to get coordinates relative to the parent widget
             parent = self.get_parent()
             if parent:
                 native = parent.get_native()
@@ -404,9 +402,8 @@ class _PaletteWindowWidget(Gtk.Popover):
         self.set_can_focus(focus)
 
     def get_origin(self):
-        """Get the origin position of the window."""
         return (0, 0)
-        
+
     def move(self, x, y):
         pass
 
@@ -432,9 +429,8 @@ class _PaletteWindowWidget(Gtk.Popover):
         self._invoker = invoker
 
     def get_rect(self):
-        """Get the rectangle occupied by this window."""
         rect = Gdk.Rectangle()
-        rect.x = 0  # GTK4: Position managed by compositor
+        rect.x = 0
         rect.y = 0
         rect.width = self.get_width()
         rect.height = self.get_height()
@@ -509,12 +505,10 @@ class _PaletteWindowWidget(Gtk.Popover):
         super().popup()
         self._up = True
 
-
     def popdown(self):
         """Hide the window."""
         if not self._up:
             return
-            
         super().popdown()
         self._up = False
 
@@ -739,8 +733,8 @@ class PaletteWindow(GObject.GObject):
         self.popup(immediate=immediate)
 
     def is_up(self):
-        if self._widget is not None and hasattr(self._widget, "get_visible"):
-            return self._widget.get_visible()
+        if self._widget is not None:
+            return self._widget.get_mapped()
         return self._up
 
     def _set_effective_group_id(self, group_id):
@@ -771,36 +765,26 @@ class PaletteWindow(GObject.GObject):
         if self._widget is None:
             return
 
-        # Get size request
+        req = Gdk.Rectangle()
         try:
-            if hasattr(self._widget, "get_preferred_size"):
-                minimum, natural = self._widget.get_preferred_size()  # type: ignore
-                req = natural
-            else:
-                req = Gdk.Rectangle()
-                req.width = style.GRID_CELL_SIZE * 3
-                req.height = style.GRID_CELL_SIZE * 2
+            min_w, nat_w, _, _ = self._widget.measure(Gtk.Orientation.HORIZONTAL, -1)
+            min_h, nat_h, _, _ = self._widget.measure(Gtk.Orientation.VERTICAL, -1)
+            req.width = nat_w
+            req.height = nat_h
         except Exception:
-            req = Gdk.Rectangle()
             req.width = style.GRID_CELL_SIZE * 3
             req.height = style.GRID_CELL_SIZE * 2
 
-        # Handle menu widget size calculation
         if isinstance(self._widget, _PaletteMenuWidget):
             total_height = 0
             for child in self._widget.get_children():  # type: ignore
                 try:
-                    if hasattr(child, "get_preferred_size"):
-                        minimum, natural = child.get_preferred_size()
-                        total_height += natural.height
-                    else:
-                        total_height += style.GRID_CELL_SIZE
+                    _, nat_h, _, _ = child.measure(Gtk.Orientation.VERTICAL, -1)
+                    total_height += nat_h
                 except Exception:
                     total_height += style.GRID_CELL_SIZE
 
-            # Add border width
-            line_width = 2
-            total_height += line_width * 2
+            total_height += 4  # 2px border top + bottom
             req.height = total_height
 
         position = invoker.get_position_for_alignment(self._alignment, req)
@@ -811,14 +795,11 @@ class PaletteWindow(GObject.GObject):
             self._widget.move(position.x, position.y)
 
     def get_full_size_request(self):
-        """Get the full size request for the palette."""
         if self._widget and hasattr(self._widget, "get_preferred_size"):
             try:
-                return self._widget.get_preferred_size()[1]  # natural size
+                return self._widget.get_preferred_size()[1]
             except Exception:
                 pass
-
-        # Fallback
         req = Gdk.Rectangle()
         req.width = style.GRID_CELL_SIZE * 3
         req.height = style.GRID_CELL_SIZE * 2

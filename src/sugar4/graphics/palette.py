@@ -94,26 +94,19 @@ class _HeaderItem(Gtk.Widget):
             self._child_widget.allocate(width, height, baseline, None)
 
     def do_snapshot(self, snapshot):
-        """Snapshot implementation for custom drawing."""
-        # Draw separator line at bottom
         width = self.get_width()
         height = self.get_height()
 
         if width > 0 and height > 0:
             color = Gdk.RGBA()
-            color.red = color.green = color.blue = 0.5  # Grey
+            color.red = color.green = color.blue = 0.5
             color.alpha = 1.0
 
             line_height = 2
-            rect = Gdk.Rectangle()
-            rect.x = 0
-            rect.y = height - line_height
-            rect.width = width
-            rect.height = line_height
-
-        snapshot.append_color(
-            color, Graphene.Rect().init(rect.x, rect.y, rect.width, rect.height)
-        )
+            snapshot.append_color(
+                color,
+                Graphene.Rect().init(0, height - line_height, width, line_height),
+            )
 
         if self._child_widget:
             self.snapshot_child(self._child_widget, snapshot)
@@ -122,8 +115,6 @@ class _HeaderItem(Gtk.Widget):
         if self._child_widget:
             self._child_widget.unparent()
             self._child_widget = None
-
-    # TODO: Dispose here
 
 
 class Palette(PaletteWindow):

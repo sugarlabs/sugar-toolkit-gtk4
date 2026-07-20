@@ -149,49 +149,42 @@ class Animator(GObject.GObject):
         self._start_time = time.time()
         self._completed = False
 
-        # Using GTK4 frame clock for smoother animation
         if self._widget and hasattr(self._widget, "add_tick_callback"):
             try:
                 self._tick_callback_id = self._widget.add_tick_callback(
                     self._tick_cb, None
                 )
-                logging.debug("Using GTK4 frame clock for animation")
             except Exception as e:
                 logging.warning(
-                    f"Failed to use frame clock, falling back to timeout: {e}"
+                    "Failed to use frame clock, falling back to timeout: %s", e
                 )
                 self._use_timeout_fallback()
         else:
             self._use_timeout_fallback()
 
     def _use_timeout_fallback(self):
-        """Use GLib timeout as fallback when frame clock is not available."""
         interval_ms = int(self._interval * 1000)
         self._timeout_sid = GLib.timeout_add(interval_ms, self._timeout_cb)
-        logging.debug(f"Using timeout fallback with {interval_ms}ms interval")
 
     def stop(self):
         """
         Stop the animation and emit the `completed` signal.
         """
-        # Stop any active animation
         if self._tick_callback_id and self._widget:
             if not getattr(self, '_in_tick_cb', False):
                 try:
                     self._widget.remove_tick_callback(self._tick_callback_id)
                 except Exception as e:
-                    logging.warning(f"Error removing tick callback: {e}")
+                    logging.warning("Error removing tick callback: %s", e)
             self._tick_callback_id = 0
 
         if self._timeout_sid:
             GLib.source_remove(self._timeout_sid)
             self._timeout_sid = 0
 
-        # Call do_stop on all animations
         for animation in self._animations:
             animation.do_stop()
 
-        # Emit completed signal if not already completed
         if not self._completed:
             self._completed = True
             self.emit("completed")
@@ -363,12 +356,15 @@ class FadeAnimation(Animation):
 
 class ScaleAnimation(Animation):
     """
-    A convenience animation class for scaling widgets.
+    A convenience animation class for scaling widgets via opacity.
+
+    GTK4 Python bindings do not expose Gsk.Transform on Gtk.Widget
+    directly. This class uses opacity as a visual scale proxy.
 
     Args:
         widget (Gtk.Widget): The widget to animate
-        start_scale (float): Starting scale factor
-        end_scale (float): Ending scale factor
+        start_scale (float): Starting opacity (0.0 to 1.0)
+        end_scale (float): Ending opacity (0.0 to 1.0)
     """
 
     def __init__(self, widget, start_scale=0.0, end_scale=1.0):
@@ -376,28 +372,23 @@ class ScaleAnimation(Animation):
         self._widget = widget
 
     def next_frame(self, frame):
-        """Update widget scale."""
+        """Update widget opacity as scale proxy."""
         if self._widget:
-            # Apply scale transform
-            transform = self._widget.get_transform()
-            if transform:
-                transform = transform.scale(frame, frame)
-            else:
-                # Create new transform
-                from gi.repository import Gsk
-
-                transform = Gsk.Transform.new().scale(frame, frame)
-            self._widget.set_transform(transform)
+            self._widget.set_opacity(max(0.0, min(1.0, frame)))
 
 
 class MoveAnimation(Animation):
     """
     A convenience animation class for moving widgets.
 
+    Uses widget margin properties as a proxy for position, which is the
+    standard GTK4 Python API approach. Direct transform manipulation is
+    not exposed on Gtk.Widget in Python bindings.
+
     Args:
         widget (Gtk.Widget): The widget to animate
-        start_pos (tuple): Starting position (x, y)
-        end_pos (tuple): Ending position (x, y)
+        start_pos (tuple): Starting position (x, y) as margin offsets
+        end_pos (tuple): Ending position (x, y) as margin offsets
     """
 
     def __init__(self, widget, start_pos, end_pos):
@@ -407,16 +398,12 @@ class MoveAnimation(Animation):
         self._end_pos = end_pos
 
     def next_frame(self, frame):
-        """Update widget position."""
+        """Update widget margin position."""
         if self._widget:
-            x = self._start_pos[0] + (self._end_pos[0] - self._start_pos[0]) * frame
-            y = self._start_pos[1] + (self._end_pos[1] - self._start_pos[1]) * frame
-
-            # Apply translation transform
-            from gi.repository import Gsk
-
-            transform = Gsk.Transform.new().translate((x, y))
-            self._widget.set_transform(transform)
+            x = int(self._start_pos[0] + (self._end_pos[0] - self._start_pos[0]) * frame)
+            y = int(self._start_pos[1] + (self._end_pos[1] - self._start_pos[1]) * frame)
+            self._widget.set_margin_start(max(0, x))
+            self._widget.set_margin_top(max(0, y))
 
 
 class ColorAnimation(Animation):
