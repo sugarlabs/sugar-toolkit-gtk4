@@ -1023,8 +1023,8 @@ class Activity(Window):
 
         preview = self.get_preview()
         if preview is not None:
-            # In GTK4, we handle binary data differently
-            self.metadata["preview"] = preview
+            # Wrap in ByteArray to ensure DBus marshals the binary data correctly
+            self.metadata["preview"] = dbus.ByteArray(preview)
 
         if not self.metadata.get("activity_id", ""):
             self.metadata["activity_id"] = self.get_id()
@@ -1479,7 +1479,7 @@ class Activity(Window):
         """
         self._busy_count -= 1
         if self._busy_count == 0:
-            self.set_cursor(None)
+            self.set_cursor(Gdk.Cursor.new_from_name("default", None))
         return self._busy_count
 
 
