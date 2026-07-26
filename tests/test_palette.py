@@ -79,9 +79,9 @@ def test_set_content_and_remove():
     palette = Palette()
     label = Gtk.Label(label="Content")
     palette.set_content(label)
-    assert palette._content_widget is label
+    assert palette.get_content_widget() is label
     palette.set_content(None)
-    assert palette._content_widget is None
+    assert palette.get_content_widget() is None
 
 
 def test_menu_switching():
@@ -199,7 +199,7 @@ def test_cursor_invoker():
 def test_tool_invoker():
     btn = Gtk.Button()
     invoker = ToolInvoker(parent=btn)
-    assert invoker._tool is not None
+    assert invoker.get_tool() is not None
 
 
 def test_tree_view_invoker():

@@ -78,12 +78,12 @@ class TestPaletteGroup(unittest.TestCase):
         palette = MockPalette("test")
 
         group.add(palette)
-        self.assertIn(palette, group._palettes)
-        self.assertIn(palette, group._sig_ids)
+        self.assertIn(palette, group.get_palettes())
+        self.assertIn(palette, group.get_sig_ids())
 
         group.remove(palette)
-        self.assertNotIn(palette, group._palettes)
-        self.assertNotIn(palette, group._sig_ids)
+        self.assertNotIn(palette, group.get_palettes())
+        self.assertNotIn(palette, group.get_sig_ids())
 
         group.remove(palette)
 

@@ -50,23 +50,23 @@ class TestToolComboBox(unittest.TestCase):
         self.assertEqual(tool_combo.combo, custom_combo)
 
         # Should have the item from custom combo
-        self.assertEqual(len(tool_combo.combo._model), 1)
+        self.assertEqual(tool_combo.combo.get_item_count(), 1)
 
     def test_label_text_property(self):
         """Test label text property setting."""
         # Test initial empty label
-        self.assertEqual(self.tool_combo._label_text, "")
+        self.assertEqual(self.tool_combo.get_label_text(), "")
         self.assertEqual(self.tool_combo.label.get_text(), "")
 
         # Test setting via new API method
         self.tool_combo.set_label_text("Test Label")
-        self.assertEqual(self.tool_combo._label_text, "Test Label")
+        self.assertEqual(self.tool_combo.get_label_text(), "Test Label")
         self.assertEqual(self.tool_combo.label.get_text(), "Test Label")
 
     def test_label_text_property_kwargs(self):
         """Test label text property via constructor kwargs."""
         tool_combo = ToolComboBox(label_text="Constructor Label")
-        self.assertEqual(tool_combo._label_text, "Constructor Label")
+        self.assertEqual(tool_combo.get_label_text(), "Constructor Label")
         self.assertEqual(tool_combo.label.get_text(), "Constructor Label")
 
     def test_margin_setting(self):
@@ -140,7 +140,7 @@ class TestToolComboBox(unittest.TestCase):
             # Test setting label-text property
             pspec = MockPSpec("label-text")
             self.tool_combo.do_set_property(pspec, "New Label")
-            self.assertEqual(self.tool_combo._label_text, "New Label")
+            self.assertEqual(self.tool_combo.get_label_text(), "New Label")
             self.assertEqual(self.tool_combo.label.get_text(), "New Label")
         except AttributeError:
             # Method might not exist in simplified version
@@ -178,7 +178,7 @@ class TestToolComboBox(unittest.TestCase):
 
         for label_text in labels:
             self.tool_combo.set_label_text(label_text)
-            self.assertEqual(self.tool_combo._label_text, label_text)
+            self.assertEqual(self.tool_combo.get_label_text(), label_text)
             self.assertEqual(self.tool_combo.label.get_text(), label_text)
 
     def test_combo_signals(self):
@@ -252,7 +252,7 @@ class TestToolComboBoxIntegration(unittest.TestCase):
         tool_combo = ToolComboBox(combo=custom_combo, label_text="Custom:")
 
         # Should have all the items
-        self.assertEqual(len(tool_combo.combo._model), 4)
+        self.assertEqual(tool_combo.combo.get_item_count(), 4)
 
         # Test selection (set to index 3 to skip separator at index 2)
         tool_combo.combo.set_active(3)  # Skip separator
