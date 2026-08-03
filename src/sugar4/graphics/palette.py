@@ -226,12 +226,7 @@ class Palette(PaletteWindow):
 
     def _setup_widget(self):
         super()._setup_widget()
-        if hasattr(self._widget, "connect"):
-            self._widget.connect("unrealize", self.__destroy_cb)
-
-    def __destroy_cb(self, widget):
-        self.popdown(immediate=True)
-        self._widget = None
+        # "unrealize" logic was removed, destruction is handled by destroy() in PaletteWindow
 
     def __notify_invoker_cb(self, palette, pspec):
         invoker = self.props.invoker
@@ -503,10 +498,11 @@ class Palette(PaletteWindow):
                         child = next_child
 
                 self._teardown_widget()
-                if hasattr(self._widget, "destroy"):
-                    self._widget.destroy()
-                elif hasattr(self._widget, "unparent"):
+                if hasattr(self._widget, "popdown"):
+                    self._widget.popdown()
+                if self._widget.get_parent() is not None:
                     self._widget.unparent()
+                self._widget = None
 
             self._widget = _PaletteMenuWidget()
 

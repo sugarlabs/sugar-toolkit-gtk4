@@ -58,6 +58,8 @@ from gi.repository import Gtk
 from gi.repository import GObject
 from gi.repository import GLib
 
+from gi.repository import PangoCairo
+
 from sugar4.graphics import style
 from sugar4.graphics.icon import Icon
 
@@ -106,7 +108,6 @@ class Alert(Gtk.Box):
         self._icon = None
         self._buttons = {}
 
-        # Set margin and spacing (replaces border_width)
         self.set_margin_top(style.DEFAULT_SPACING)
         self.set_margin_bottom(style.DEFAULT_SPACING)
         self.set_margin_start(style.DEFAULT_SPACING)
@@ -164,8 +165,11 @@ class Alert(Gtk.Box):
                 self._msg_label.set_wrap(True)
         elif pspec.name == "icon":
             if self._icon != value:
+                if self._icon is not None:
+                    self.remove(self._icon)
                 self._icon = value
-                self.prepend(self._icon)
+                if self._icon is not None:
+                    self.prepend(self._icon)
 
     def do_get_property(self, pspec):
         """
@@ -353,7 +357,7 @@ class _TimeoutIcon(Gtk.Widget):
             text_width, text_height = layout.get_pixel_size()
             cr.move_to(x - text_width / 2, y - text_height / 2)
             cr.set_source_rgba(color.red, color.green, color.blue, color.alpha)
-            layout.show_in_cairo_context(cr)
+            PangoCairo.show_layout(cr, layout)
 
     def set_text(self, text):
         self._text = str(text)

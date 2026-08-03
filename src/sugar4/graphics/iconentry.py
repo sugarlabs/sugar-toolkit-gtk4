@@ -151,14 +151,17 @@ class IconEntry(Gtk.Entry):
             viewport.height = float(height)
             handle.render_document(context, viewport)
 
-            pixbuf = Gdk.pixbuf_get_from_surface(surface, 0, 0, int(width), int(height))
-            if pixbuf is None:
-                logging.warning(
-                    "IconEntry set_icon_from_name: failed to render SVG icon '%s'.",
-                    name,
-                )
-                return
-            self.set_icon(position, pixbuf)
+            # GTK4: Gdk.pixbuf_get_from_surface() removed — build texture from
+            # raw Cairo ImageSurface bytes using Gdk.MemoryTexture.
+            data = bytes(surface.get_data())
+            gbytes = GLib.Bytes.new(data)
+            texture = Gdk.MemoryTexture.new(
+                int(width), int(height),
+                Gdk.MemoryFormat.B8G8R8A8_PREMULTIPLIED,
+                gbytes,
+                surface.get_stride(),
+            )
+            self.set_icon_from_paintable(position, texture)
         else:
             try:
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(

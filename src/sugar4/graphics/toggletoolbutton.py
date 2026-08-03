@@ -110,7 +110,6 @@ class ToggleToolButton(Gtk.ToggleButton):
         # Connect to root changes and map signal to setup accelerator
         self.connect("notify::root", _on_root_changed)
         self.connect("map", self._on_mapped)
-        self.connect("unrealize", self.__destroy_cb)
 
         self._apply_toolbar_button_css()
 
@@ -154,16 +153,21 @@ class ToggleToolButton(Gtk.ToggleButton):
         """Called when widget is mapped (visible and added to window)."""
         _add_accelerator(self)
 
-    def __destroy_cb(self, icon):
-        if self._palette_invoker is not None:
+    def do_dispose(self):
+        if getattr(self, "_palette_invoker", None) is not None:
             self._palette_invoker.detach()
+            self._palette_invoker = None
         # Remove accelerator action
         if hasattr(self, "_accel_action_name"):
             root = self.get_root()
             if root:
-                app = root.get_application()
+                app = getattr(root, "get_application", lambda: None)()
                 if app:
-                    app.remove_action(self._accel_action_name)
+                    try:
+                        app.remove_action(self._accel_action_name)
+                    except:
+                        pass
+        super().do_dispose()
 
     def set_icon_name(self, icon_name):
         """

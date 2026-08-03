@@ -1,4 +1,4 @@
-﻿# Copyright (C) 2006-2007 Red Hat, Inc.
+# Copyright (C) 2006-2007 Red Hat, Inc.
 # Copyright (C) 2007-2009 One Laptop Per Child
 # Copyright (C) 2010 Collabora Ltd. <http://www.collabora.co.uk/>
 # Copyright (C) 2025 MostlyK
@@ -1338,7 +1338,7 @@ class Activity(Window):
 
     def _complete_close(self):
         """Complete the close process."""
-        self.destroy()
+        self.close()
 
         if self.shared_activity:
             self.shared_activity.leave()

@@ -106,17 +106,22 @@ class _TrayViewport(Gtk.ScrolledWindow):
             logging.warning("Item not found in tray children")
             return
 
-        allocation = item.get_allocation()
         if self.orientation == Gtk.Orientation.HORIZONTAL:
             adj = self.get_hadjustment()
-            start = allocation.x
-            stop = allocation.x + allocation.width
+            # Translate item position relative to traybar
+            ok, x, _ = item.translate_coordinates(self.traybar, 0, 0)
+            if not ok:
+                return
+            start = x
+            stop = x + item.get_width()
         else:
             adj = self.get_vadjustment()
-            start = allocation.y
-            stop = allocation.y + allocation.height
+            ok, _, y = item.translate_coordinates(self.traybar, 0, 0)
+            if not ok:
+                return
+            start = y
+            stop = y + item.get_height()
 
-        # Scroll if needed
         if start < adj.get_value():
             adj.set_value(start)
         elif stop > adj.get_value() + adj.get_page_size():
@@ -124,26 +129,28 @@ class _TrayViewport(Gtk.ScrolledWindow):
 
     def _scroll_next(self):
         """Scroll to next page."""
-        allocation = self.get_allocation()
+        width = self.get_width()
+        height = self.get_height()
         if self.orientation == Gtk.Orientation.HORIZONTAL:
             adj = self.get_hadjustment()
-            new_value = adj.get_value() + allocation.width
-            adj.set_value(min(new_value, adj.get_upper() - allocation.width))
+            new_value = adj.get_value() + width
+            adj.set_value(min(new_value, adj.get_upper() - width))
         else:
             adj = self.get_vadjustment()
-            new_value = adj.get_value() + allocation.height
-            adj.set_value(min(new_value, adj.get_upper() - allocation.height))
+            new_value = adj.get_value() + height
+            adj.set_value(min(new_value, adj.get_upper() - height))
 
     def _scroll_previous(self):
         """Scroll to previous page."""
-        allocation = self.get_allocation()
+        width = self.get_width()
+        height = self.get_height()
         if self.orientation == Gtk.Orientation.HORIZONTAL:
             adj = self.get_hadjustment()
-            new_value = adj.get_value() - allocation.width
+            new_value = adj.get_value() - width
             adj.set_value(max(adj.get_lower(), new_value))
         else:
             adj = self.get_vadjustment()
-            new_value = adj.get_value() - allocation.height
+            new_value = adj.get_value() - height
             adj.set_value(max(adj.get_lower(), new_value))
 
 
@@ -160,17 +167,18 @@ class _TrayViewport(Gtk.ScrolledWindow):
         self._update_scrollable_state()
 
     def _update_scrollable_state(self):
-        allocation = self.get_allocation()
-        if allocation.width <= 1 and allocation.height <= 1:
+        width = self.get_width()
+        height = self.get_height()
+        if width <= 1 and height <= 1:
             return
 
-        min_w, nat_w, _, _ = self.traybar.measure(Gtk.Orientation.HORIZONTAL, -1)
-        min_h, nat_h, _, _ = self.traybar.measure(Gtk.Orientation.VERTICAL, -1)
+        _min_w, nat_w, _, _ = self.traybar.measure(Gtk.Orientation.HORIZONTAL, -1)
+        _min_h, nat_h, _, _ = self.traybar.measure(Gtk.Orientation.VERTICAL, -1)
 
         if self.orientation == Gtk.Orientation.HORIZONTAL:
-            scrollable = nat_w > allocation.width
+            scrollable = nat_w > width
         else:
-            scrollable = nat_h > allocation.height
+            scrollable = nat_h > height
 
         if scrollable != self._scrollable:
             self._scrollable = scrollable
@@ -210,11 +218,11 @@ class _TrayViewport(Gtk.ScrolledWindow):
         if index == -1:
             self.traybar.append(item)
         else:
-            # GTK4 doesn't have direct index insertion, so we use reorder
             self.traybar.append(item)
-            if index < len(self.get_children()) - 1:
+            children = self.get_children()
+            if index < len(children) - 1:
                 self.traybar.reorder_child_after(
-                    item, self.get_children()[index - 1] if index > 0 else None
+                    item, children[index - 1] if index > 0 else None
                 )
 
     def remove_item(self, item):
@@ -335,7 +343,7 @@ class HTray(Gtk.Widget):
         """Clean up widget on disposal."""
         if self._box:
             self._box.unparent()
-        ## TODO: well could be a bug
+            self._box = None
         super().do_dispose()
 
     def do_measure(self, orientation, for_size):
@@ -448,7 +456,7 @@ class VTray(Gtk.Widget):
         """Clean up widget on disposal."""
         if self._box:
             self._box.unparent()
-        ## TODO: well could be a bug
+            self._box = None
         super().do_dispose()
 
     def do_measure(self, orientation, for_size):
@@ -571,20 +579,10 @@ class TrayIcon(ToolButton):
         return self.get_icon_widget()
 
 
-def _apply_tray_css():
-    """Apply CSS styling for tray widgets."""
-    css = """
-    .drag-active {
-        background-color: rgba(0, 0, 0, 0.2);
-    }
-    """
-    style.apply_css_to_widget(None, css)  # Apply globally
-
-
 try:
     _apply_tray_css()
 except Exception:
-    pass  # Ignore if GTK is not available
+    pass
 
 
 if hasattr(HTray, "set_css_name"):

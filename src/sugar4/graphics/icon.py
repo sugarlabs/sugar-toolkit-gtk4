@@ -27,9 +27,6 @@ are SVG files that are re-coloured with a fill and a stroke colour. Typically,
 icons representing the system use a greyscale color palette, whereas icons
 representing people take on their selected XoColors.
 
-This module provides modern icon widgets using native gesture handling
-and snapshot-based rendering for improved performance and accessibility.
-
 Classes:
     Icon: Basic icon widget for displaying themed icons
     EventIcon: Icon with mouse event handling using gesture controllers
@@ -590,6 +587,9 @@ class Icon(Gtk.Widget):
         pixel_size: int = STANDARD_ICON_SIZE,
         **kwargs,
     ):
+        if "file" in kwargs:
+            file_name = kwargs.pop("file")
+
         self._buffer = _IconBuffer()
 
         super().__init__(**kwargs)
@@ -780,22 +780,23 @@ class Icon(Gtk.Widget):
             self.queue_draw()
 
     def get_gtk_image(self) -> Gtk.Image:
-        """
-        Create a Gtk.Image from this icon for compatibility.
-
-        Returns:
-            Gtk.Image: Image widget with icon content
-        """
+        """Create a Gtk.Image from this icon."""
         surface = self._buffer.get_surface(self.get_sensitive())
         if surface:
-            # Convert surface to pixbuf then to texture
-            pixbuf = Gdk.pixbuf_get_from_surface(
-                surface, 0, 0, surface.get_width(), surface.get_height()
+            # GTK4: Gdk.pixbuf_get_from_surface() removed — extract raw bytes
+            # from the Cairo ImageSurface and wrap with Gdk.MemoryTexture.
+            w = surface.get_width()
+            h = surface.get_height()
+            stride = surface.get_stride()
+            data = bytes(surface.get_data())
+            gbytes = GLib.Bytes.new(data)
+            texture = Gdk.MemoryTexture.new(
+                w, h,
+                Gdk.MemoryFormat.B8G8R8A8_PREMULTIPLIED,
+                gbytes,
+                stride,
             )
-            if pixbuf:
-                texture = Gdk.Texture.new_for_pixbuf(pixbuf)
-                image = Gtk.Image.new_from_paintable(texture)
-                return image
+            return Gtk.Image.new_from_paintable(texture)
 
         return Gtk.Image.new_from_icon_name("image-missing")
 
@@ -981,14 +982,7 @@ class CanvasIcon(EventIcon):
 
 
 class CellRendererIcon(Gtk.CellRenderer):
-    """
-    Icon renderer for use in list/tree views.
-
-    Modern implementations use different approaches for cell rendering.
-    This provides compatibility for legacy code that may need adaptation.
-
-    Note: Consider using modern list/tree widget patterns instead.
-    """
+    """Icon renderer for use in GtkTreeView columns."""
     __gtype_name__ = 'SugarCellRendererIcon'
 
     __gsignals__ = {

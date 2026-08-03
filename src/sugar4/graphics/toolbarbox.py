@@ -1,4 +1,4 @@
-﻿# Copyright (C) 2009, Aleksey Lim
+# Copyright (C) 2009, Aleksey Lim
 # Copyright (C) 2025 MostlyK
 #
 # This library is free software; you can redistribute it and/or
@@ -444,7 +444,13 @@ class _Box(Gtk.Box):
             self.snapshot_child(child, snapshot)
             child = child.get_next_sibling()
 
-        button_alloc = self._toolbar_button.get_allocation()
+        # In GTK4 get_allocation() is removed; translate button coordinates
+        # relative to self, then use get_width() for the button width.
+        btn_x = 0
+        btn_w = self._toolbar_button.get_width()
+        ok, bx, _by = self._toolbar_button.translate_coordinates(self, 0, 0)
+        if ok:
+            btn_x = bx
         my_width = self.get_width()
 
         if my_width > 0:
@@ -457,15 +463,14 @@ class _Box(Gtk.Box):
             line_width = style.FOCUS_LINE_WIDTH * 2
 
             rect1 = Graphene.Rect()
-            rect1.init(0, 0, button_alloc.x + style.FOCUS_LINE_WIDTH, line_width)
+            rect1.init(0, 0, btn_x + style.FOCUS_LINE_WIDTH, line_width)
             snapshot.append_color(color, rect1)
 
             rect2 = Graphene.Rect()
             rect2.init(
-                button_alloc.x + button_alloc.width - style.FOCUS_LINE_WIDTH,
+                btn_x + btn_w - style.FOCUS_LINE_WIDTH,
                 0,
-                my_width
-                - (button_alloc.x + button_alloc.width - style.FOCUS_LINE_WIDTH),
+                my_width - (btn_x + btn_w - style.FOCUS_LINE_WIDTH),
                 line_width,
             )
             snapshot.append_color(color, rect2)

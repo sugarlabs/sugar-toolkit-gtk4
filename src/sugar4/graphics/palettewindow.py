@@ -655,11 +655,12 @@ class PaletteWindow(GObject.GObject):
 
     def destroy(self):
         if self._widget is not None:
-            if hasattr(self._widget, "destroy"):
-                self._widget.destroy()
-            elif hasattr(self._widget, "unparent"):
+            self._teardown_widget()
+            if hasattr(self._widget, "popdown"):
+                self._widget.popdown()
+            if self._widget.get_parent() is not None:
                 self._widget.unparent()
-            self._widget = None  # Prevent use-after-destroy (GTK_IS_WIDGET assertion)
+            self._widget = None  # Release reference for GTK4 GC
 
     def __destroy_cb(self, palette):
         """Handle widget destruction."""
@@ -1062,7 +1063,8 @@ class Invoker(GObject.GObject):
     def detach(self):
         self.parent = None
         if self._palette is not None:
-            self._palette.destroy()
+            self._palette.popdown(immediate=True)
+            self._palette.unparent()
             self._palette = None
 
     def _get_position_for_alignment(self, alignment, palette_dim):
@@ -1279,10 +1281,6 @@ class Invoker(GObject.GObject):
         if self._palette is not None:
             self._palette.popdown(immediate=True)
             self._palette.props.invoker = None
-            GLib.idle_add(
-                lambda old_palette=self._palette: old_palette.destroy(),
-                priority=GLib.PRIORITY_LOW,
-            )  # type: ignore
 
         self._palette = palette
 
@@ -1375,10 +1373,33 @@ class WidgetInvoker(Invoker):
         self._setup_controllers()
         self.attach(parent)
 
+    def _remove_controllers(self):
+        if self._widget:
+            if self._motion_controller:
+                try:
+                    self._widget.remove_controller(self._motion_controller)
+                except Exception:
+                    pass
+                self._motion_controller = None
+            if self._click_controller:
+                try:
+                    self._widget.remove_controller(self._click_controller)
+                except Exception:
+                    pass
+                self._click_controller = None
+            if self._long_press_gesture:
+                try:
+                    self._widget.remove_controller(self._long_press_gesture)
+                except Exception:
+                    pass
+                self._long_press_gesture = None
+
     def _setup_controllers(self):
         """Set up event controllers for palette interaction."""
         if not self._widget:
             return
+
+        self._remove_controllers()
 
         # Ensure widget is focusable and sensitive for event handling
         self._widget.set_can_focus(True)
@@ -1408,17 +1429,7 @@ class WidgetInvoker(Invoker):
             pass
 
     def detach(self):
-        if self._widget:
-            try:
-                if self._motion_controller:
-                    GLib.idle_add(self._widget.remove_controller, self._motion_controller)
-                if self._click_controller:
-                    GLib.idle_add(self._widget.remove_controller, self._click_controller)
-                if self._long_press_gesture:
-                    GLib.idle_add(self._widget.remove_controller, self._long_press_gesture)
-            except Exception:
-                pass
-
+        self._remove_controllers()
         super().detach()
 
     def get_rect(self):
@@ -1444,7 +1455,6 @@ class WidgetInvoker(Invoker):
         if not self.parent:
             return
 
-        allocation = self.parent.get_allocation()
         context = self.parent.get_style_context()
         context.add_class("toolitem")
         context.add_class("palette-down")
@@ -1548,7 +1558,29 @@ class CursorInvoker(Invoker):
         if parent:
             self.attach(parent)
 
+    def _remove_controllers(self):
+        if self.parent:
+            if self._motion_controller:
+                try:
+                    self.parent.remove_controller(self._motion_controller)
+                except Exception:
+                    pass
+                self._motion_controller = None
+            if self._click_controller:
+                try:
+                    self.parent.remove_controller(self._click_controller)
+                except Exception:
+                    pass
+                self._click_controller = None
+            if self._long_press_gesture:
+                try:
+                    self.parent.remove_controller(self._long_press_gesture)
+                except Exception:
+                    pass
+                self._long_press_gesture = None
+
     def attach(self, parent):
+        self.detach()
         super().attach(parent)
 
         if self.parent:
@@ -1573,17 +1605,7 @@ class CursorInvoker(Invoker):
 
     def detach(self):
         """Detach from the parent."""
-        if self.parent:
-            try:
-                if self._motion_controller:
-                    GLib.idle_add(self.parent.remove_controller, self._motion_controller)
-                if self._click_controller:
-                    GLib.idle_add(self.parent.remove_controller, self._click_controller)
-                if self._long_press_gesture:
-                    GLib.idle_add(self.parent.remove_controller, self._long_press_gesture)
-            except Exception:
-                pass
-
+        self._remove_controllers()
         super().detach()
 
     def get_rect(self):
@@ -1744,11 +1766,14 @@ class TreeViewInvoker(Invoker):
         if self._tree_view:
             try:
                 if self._motion_controller:
-                    GLib.idle_add(self._tree_view.remove_controller, self._motion_controller)
+                    self._tree_view.remove_controller(self._motion_controller)
+                    self._motion_controller = None
                 if self._click_controller:
-                    GLib.idle_add(self._tree_view.remove_controller, self._click_controller)
+                    self._tree_view.remove_controller(self._click_controller)
+                    self._click_controller = None
                 if self._long_press_gesture:
-                    GLib.idle_add(self._tree_view.remove_controller, self._long_press_gesture)
+                    self._tree_view.remove_controller(self._long_press_gesture)
+                    self._long_press_gesture = None
             except Exception:
                 pass
 
@@ -1813,7 +1838,6 @@ class TreeViewInvoker(Invoker):
 
             if self.palette is not None:
                 self.palette.popdown(immediate=True)
-                self.palette.destroy()
                 self.palette = None
 
             self.notify_mouse_enter()
@@ -1850,7 +1874,6 @@ class TreeViewInvoker(Invoker):
             # Left mouse button
             if self.palette is not None:
                 self.palette.popdown(immediate=True)
-                self.palette.destroy()
                 self.palette = None
 
             # Handle cell renderer click manually because GTK4 TreeView single-click doesn't reliably trigger do_activate

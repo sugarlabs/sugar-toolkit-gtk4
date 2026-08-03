@@ -154,48 +154,13 @@ class ToolButton(Gtk.Button):
         if self._accelerator:
             self.set_accelerator(self._accelerator)
 
-        self.connect("unrealize", self.__destroy_cb)
         self.connect("clicked", self.__clicked_cb)
 
-        self._apply_toolbar_button_css()
-
-    def _apply_toolbar_button_css(self):
-        css = """
-        .toolbar-button {
-            border-radius: 6px;
-            margin: 2px;
-            padding: 6px;
-            min-width: 32px;
-            min-height: 32px;
-        }
-
-        .toolbar-button:hover {
-            background: alpha(currentColor, 0.1);
-        }
-
-        .toolbar-button:active,
-        .toolbar-button.active {
-            background: alpha(currentColor, 0.2);
-            border: 1px solid alpha(currentColor, 0.3);
-        }
-
-        .toolbar-button:focus {
-            outline: 2px solid rgb(53, 132, 228);
-            outline-offset: 2px;
-        }
-        """
-
-        try:
-            css_provider = Gtk.CssProvider()
-            css_provider.load_from_string(css)
-            self.get_style_context().add_provider(css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-        except Exception as e:
-            logging.warning(f"Could not apply toolbar button CSS: {e}")
-
-    def __destroy_cb(self, widget):
-        if self._palette_invoker is not None:
+    def do_dispose(self):
+        if getattr(self, "_palette_invoker", None) is not None:
             self._palette_invoker.detach()
             self._palette_invoker = None
+        super().do_dispose()
 
     def __clicked_cb(self, button):
         if self._hide_tooltip_on_click and self.get_palette():
@@ -295,24 +260,17 @@ class ToolButton(Gtk.Button):
     )
 
     def set_icon_name(self, icon_name: Optional[str]):
-        print(f"[ToolButton] set_icon_name called with: {icon_name}")
         if self._icon_widget:
             self._content_box.remove(self._icon_widget)
             self._icon_widget = None
         if icon_name:
-            import os
-
             if os.path.isabs(icon_name) or icon_name.endswith(
                 (".svg", ".png", ".jpg", ".jpeg")
             ):
-                print(
-                    f"[ToolButton] Icon file exists: {os.path.exists(icon_name)} at {icon_name}"
-                )
                 self._icon_widget = Icon(
                     file_name=icon_name, pixel_size=style.STANDARD_ICON_SIZE
                 )
             else:
-                print(f"[ToolButton] Using icon name: {icon_name}")
                 self._icon_widget = Icon(
                     icon_name=icon_name, pixel_size=style.STANDARD_ICON_SIZE
                 )
