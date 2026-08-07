@@ -209,31 +209,22 @@ class _PaletteMenuWidget(Gtk.Popover):
                 parent_widget = self._invoker._tree_view
 
             if parent_widget is not None:
-                native = parent_widget.get_native()
-                if native and native.get_surface():
-                    current_parent = self.get_parent()
-                    if current_parent is not None and current_parent is not parent_widget:
-                        self.unparent()
-                        current_parent = None
-                    if current_parent is None:
-                        try:
-                            Gtk.Widget.set_parent(self, parent_widget)
-                            parent_widget.connect(
-                                'destroy',
-                                lambda w: self.unparent() if self.get_parent() else None
-                            )
-                        except Exception as e:
-                            logging.warning("set_parent failed on %s: %s", parent_widget, e)
-                else:
-                    parent_widget = None
+                current_parent = self.get_parent()
+                if current_parent is not None and current_parent is not parent_widget:
+                    self.unparent()
+                    current_parent = None
+                if current_parent is None:
+                    try:
+                        Gtk.Widget.set_parent(self, parent_widget)
+                        parent_widget.connect(
+                            'destroy',
+                            lambda w: self.unparent() if self.get_parent() else None
+                        )
+                    except Exception as e:
+                        logging.warning("set_parent failed on %s: %s", parent_widget, e)
 
         if not self.get_parent():
             logging.warning("Palette popup failed: No parent widget. parent_widget was %s, invoker was %s", parent_widget if 'parent_widget' in locals() else 'Not evaluated', self._invoker)
-            return
-
-        native = self.get_parent().get_native()
-        if not native or not native.get_surface():
-            logging.warning("Palette popup failed: Parent is not in a toplevel window.")
             return
 
         self._entered = False
@@ -470,27 +461,18 @@ class _PaletteWindowWidget(Gtk.Popover):
                 parent_widget = self._invoker._tree_view
 
             if parent_widget is not None:
-                native = parent_widget.get_native()
-                if native and native.get_surface():
-                    current_parent = self.get_parent()
-                    if current_parent is not None and current_parent is not parent_widget:
-                        self.unparent()
-                        current_parent = None
-                    if current_parent is None:
-                        try:
-                            Gtk.Widget.set_parent(self, parent_widget)
-                        except Exception as e:
-                            logging.warning("set_parent failed on %s: %s", parent_widget, e)
-                else:
-                    parent_widget = None
+                current_parent = self.get_parent()
+                if current_parent is not None and current_parent is not parent_widget:
+                    self.unparent()
+                    current_parent = None
+                if current_parent is None:
+                    try:
+                        Gtk.Widget.set_parent(self, parent_widget)
+                    except Exception as e:
+                        logging.warning("set_parent failed on %s: %s", parent_widget, e)
 
         if not self.get_parent():
             logging.warning("Palette popup failed: No parent widget.")
-            return
-
-        native = self.get_parent().get_native()
-        if not native or not native.get_surface():
-            logging.warning("Palette popup failed: Parent is not in a toplevel window.")
             return
 
         self._entered = False

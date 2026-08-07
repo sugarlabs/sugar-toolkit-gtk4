@@ -1035,6 +1035,12 @@ class CellRendererIcon(Gtk.CellRenderer):
 
     def set_xo_color(self, xo_color: Optional[XoColor]):
         self._xo_color = xo_color
+        if xo_color is not None:
+            self._buffer.fill_color = xo_color.get_fill_color()
+            self._buffer.stroke_color = xo_color.get_stroke_color()
+        else:
+            self._buffer.fill_color = self._fill_color
+            self._buffer.stroke_color = self._stroke_color
 
     xo_color = GObject.Property(type=object, getter=get_xo_color, setter=set_xo_color)
 
@@ -1081,9 +1087,12 @@ class CellRendererIcon(Gtk.CellRenderer):
 
     def get_surface(self, sensitive: bool = True) -> Optional[cairo.ImageSurface]:
         """Get rendered surface."""
-        if self._xo_color:
+        if self._xo_color is not None:
             self._buffer.fill_color = self._xo_color.get_fill_color()
             self._buffer.stroke_color = self._xo_color.get_stroke_color()
+        else:
+            self._buffer.fill_color = self._fill_color
+            self._buffer.stroke_color = self._stroke_color
 
         return self._buffer.get_surface(sensitive)
 

@@ -108,17 +108,18 @@ class _TrayViewport(Gtk.ScrolledWindow):
 
         if self.orientation == Gtk.Orientation.HORIZONTAL:
             adj = self.get_hadjustment()
-            # Translate item position relative to traybar
-            ok, x, _ = item.translate_coordinates(self.traybar, 0, 0)
-            if not ok:
+            coords = item.translate_coordinates(self.traybar, 0, 0)
+            if not coords:
                 return
+            x = coords[0]
             start = x
             stop = x + item.get_width()
         else:
             adj = self.get_vadjustment()
-            ok, _, y = item.translate_coordinates(self.traybar, 0, 0)
-            if not ok:
+            coords = item.translate_coordinates(self.traybar, 0, 0)
+            if not coords:
                 return
+            y = coords[1]
             start = y
             stop = y + item.get_height()
 
