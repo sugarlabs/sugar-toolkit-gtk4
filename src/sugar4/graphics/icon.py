@@ -994,6 +994,8 @@ class CellRendererIcon(Gtk.CellRenderer):
         self._buffer = _IconBuffer()
         self._buffer.cache = True
         self._xo_color = None
+        self._fill_color = None
+        self._stroke_color = None
         self._prelit_fill_color = None
         self._prelit_stroke_color = None
         self._is_scrolling = False
@@ -1045,17 +1047,19 @@ class CellRendererIcon(Gtk.CellRenderer):
     xo_color = GObject.Property(type=object, getter=get_xo_color, setter=set_xo_color)
 
     def get_fill_color(self) -> Optional[str]:
-        return self._buffer.fill_color
+        return self._fill_color or self._buffer.fill_color
 
     def set_fill_color(self, color: Optional[str]):
+        self._fill_color = color
         self._buffer.fill_color = color
 
     fill_color = GObject.Property(type=str, getter=get_fill_color, setter=set_fill_color)
 
     def get_stroke_color(self) -> Optional[str]:
-        return self._buffer.stroke_color
+        return self._stroke_color or self._buffer.stroke_color
 
     def set_stroke_color(self, color: Optional[str]):
+        self._stroke_color = color
         self._buffer.stroke_color = color
 
     stroke_color = GObject.Property(type=str, getter=get_stroke_color, setter=set_stroke_color)

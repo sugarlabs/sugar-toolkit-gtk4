@@ -197,7 +197,7 @@ class _PaletteMenuWidget(Gtk.Popover):
             parent_widget = None
             if hasattr(self._invoker, "get_widget"):
                 parent_widget = self._invoker.get_widget()
-            elif hasattr(self._invoker, "parent") and self._invoker.parent is not None:
+            elif hasattr(self._invoker, "parent") and isinstance(self._invoker.parent, Gtk.Widget):
                 parent_widget = self._invoker.parent
             elif isinstance(self._invoker, Gtk.Widget):
                 parent_widget = self._invoker
@@ -216,10 +216,6 @@ class _PaletteMenuWidget(Gtk.Popover):
                 if current_parent is None:
                     try:
                         Gtk.Widget.set_parent(self, parent_widget)
-                        parent_widget.connect(
-                            'destroy',
-                            lambda w: self.unparent() if self.get_parent() else None
-                        )
                     except Exception as e:
                         logging.warning("set_parent failed on %s: %s", parent_widget, e)
 
@@ -459,6 +455,8 @@ class _PaletteWindowWidget(Gtk.Popover):
                 parent_widget = self._invoker._widget
             elif hasattr(self._invoker, "_tree_view") and self._invoker._tree_view is not None:
                 parent_widget = self._invoker._tree_view
+            elif hasattr(self._invoker, "parent") and isinstance(self._invoker.parent, Gtk.Widget):
+                parent_widget = self._invoker.parent
 
             if parent_widget is not None:
                 current_parent = self.get_parent()
@@ -604,6 +602,10 @@ class PaletteWindow(GObject.GObject):
             self._widget.connect("destroy", self.__destroy_cb)
             self._widget.connect("enter-notify", self.__enter_notify_cb)
             self._widget.connect("leave-notify", self.__leave_notify_cb)
+            self._widget.connect("map", self.__show_cb)
+            self._widget.connect("unmap", self.__hide_cb)
+            if hasattr(self._widget, "closed"):
+                self._widget.connect("closed", self.__hide_cb)
 
         # Set up key event controller for GTK4
         self._key_controller = Gtk.EventControllerKey()
@@ -627,6 +629,8 @@ class PaletteWindow(GObject.GObject):
                 self._widget.disconnect_by_func(self.__destroy_cb)
                 self._widget.disconnect_by_func(self.__enter_notify_cb)
                 self._widget.disconnect_by_func(self.__leave_notify_cb)
+                self._widget.disconnect_by_func(self.__show_cb)
+                self._widget.disconnect_by_func(self.__hide_cb)
 
             if self._widget is not None and hasattr(self, "_key_controller"):
                 GLib.idle_add(self._widget.remove_controller, self._key_controller)
@@ -1316,7 +1320,9 @@ class Invoker(GObject.GObject):
     def get_toplevel(self):
         """Get the toplevel window - implemented by subclasses."""
         if self.parent:
-            return self.parent.get_root()
+            root = self.parent.get_root()
+            if isinstance(root, Gtk.Root):
+                return root
         return None
 
 
@@ -1510,7 +1516,9 @@ class WidgetInvoker(Invoker):
 
     def get_toplevel(self):
         if self._widget:
-            return self._widget.get_root()
+            root = self._widget.get_root()
+            if isinstance(root, Gtk.Root):
+                return root
         return None
 
     def notify_popup(self):
@@ -1566,6 +1574,8 @@ class CursorInvoker(Invoker):
         super().attach(parent)
 
         if self.parent:
+            self._remove_controllers()
+
             try:
                 self._pointer_position = _get_pointer_position(self.parent)
             except Exception:
@@ -1624,6 +1634,9 @@ class CursorInvoker(Invoker):
                 pass
         self.notify_mouse_leave()
 
+    def get_widget(self):
+        return self.parent
+
     def __button_release_event_cb(self, gesture, n_press, x, y):
         if self._long_pressed_recognized:
             self._long_pressed_recognized = False
@@ -1644,7 +1657,9 @@ class CursorInvoker(Invoker):
 
     def get_toplevel(self):
         if self.parent:
-            return self.parent.get_root()
+            root = self.parent.get_root()
+            if isinstance(root, Gtk.Root):
+                return root
         return None
 
 
@@ -1794,7 +1809,9 @@ class TreeViewInvoker(Invoker):
 
     def get_toplevel(self):
         if self._tree_view:
-            return self._tree_view.get_root()
+            root = self._tree_view.get_root()
+            if isinstance(root, Gtk.Root):
+                return root
         return None
 
     def __motion_notify_event_cb(self, controller, x, y):

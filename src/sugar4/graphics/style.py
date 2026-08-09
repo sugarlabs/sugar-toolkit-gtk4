@@ -267,28 +267,68 @@ def zoom(units: float) -> int:
     return round(ZOOM_FACTOR * units)
 
 
+_CSS_CACHE: dict = {}
+_CSS_COUNTER: int = 0
+
+
 def apply_css_to_widget(widget, css: str) -> None:
     """
-    Apply CSS styling globally (GTK4 doesn't support per-widget CSS providers).
+    Apply CSS styling using modern GTK4 add_css_class API with provider caching.
 
     Args:
-        widget: Widget to style (ignored in GTK4, CSS is global)
-        css (str): CSS string to apply
+        widget: Gtk.Widget to style
+        css (str): CSS snippet or class name
     """
-    if not GTK_AVAILABLE:
+    global _CSS_COUNTER
+    if not GTK_AVAILABLE or widget is None:
+        return
+
+    css = css.strip()
+    if not css:
+        return
+
+    # If it's a simple CSS class name (e.g. "toolbar" or ".toolbar")
+    if not ("{" in css or "}" in css or ":" in css):
+        class_name = css.lstrip('.')
+        if hasattr(widget, 'add_css_class'):
+            widget.add_css_class(class_name)
         return
 
     try:
-        css_provider = Gtk.CssProvider()
-        css_provider.load_from_string(css)
+        # Check cache for identical CSS rule
+        if css in _CSS_CACHE:
+            class_name, _ = _CSS_CACHE[css]
+        else:
+            _CSS_COUNTER += 1
+            class_name = f"sugar-dynamic-style-{_CSS_COUNTER}"
 
-        Gtk.StyleContext.add_provider_for_display(
-            Gdk.Display.get_default(),
-            css_provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
+            # Wrap CSS rule targeting class_name
+            if css.startswith("*"):
+                scoped_css = css.replace("*", f".{class_name}", 1)
+            elif not css.startswith("."):
+                scoped_css = f".{class_name} {{ {css} }}"
+            else:
+                scoped_css = css
+
+            css_provider = Gtk.CssProvider()
+            css_provider.load_from_string(scoped_css)
+
+            display = Gdk.Display.get_default()
+            if display:
+                Gtk.StyleContext.add_provider_for_display(
+                    display,
+                    css_provider,
+                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                )
+
+            _CSS_CACHE[css] = (class_name, css_provider)
+
+        if hasattr(widget, 'add_css_class'):
+            widget.add_css_class(class_name)
     except Exception as e:
-        logging.warning(f"Failed to apply CSS: {e}")
+        logging.warning(f"Failed to apply CSS to widget: {e}")
+
+
 
 
 _BASE_CSS = """
