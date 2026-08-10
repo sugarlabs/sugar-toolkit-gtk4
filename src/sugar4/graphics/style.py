@@ -302,13 +302,12 @@ def apply_css_to_widget(widget, css: str) -> None:
             _CSS_COUNTER += 1
             class_name = f"sugar-dynamic-style-{_CSS_COUNTER}"
 
-            # Wrap CSS rule targeting class_name
-            if css.startswith("*"):
-                scoped_css = css.replace("*", f".{class_name}", 1)
-            elif not css.startswith("."):
-                scoped_css = f".{class_name} {{ {css} }}"
-            else:
+            # If css already contains full selector block(s) with '{', use as-is.
+            # Otherwise, wrap property declarations in dynamic class selector.
+            if "{" in css:
                 scoped_css = css
+            else:
+                scoped_css = f".{class_name} {{ {css} }}"
 
             css_provider = Gtk.CssProvider()
             css_provider.load_from_string(scoped_css)
