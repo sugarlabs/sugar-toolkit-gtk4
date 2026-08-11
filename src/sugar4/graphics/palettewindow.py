@@ -123,7 +123,8 @@ class _PaletteMenuWidget(Gtk.Popover):
         
         self.add_css_class("palette")
         self.add_css_class("palette-popover")
-        self.set_has_arrow(False)
+        self.set_has_arrow(True)
+        self.set_autohide(False)
 
         # container for menu items
         self._menu_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -147,6 +148,10 @@ class _PaletteMenuWidget(Gtk.Popover):
         self._click_controller = Gtk.GestureClick()
         self._click_controller.connect("released", self._button_release_cb)
         self.add_controller(self._click_controller)
+
+        self._key_controller = Gtk.EventControllerKey()
+        self._key_controller.connect("key-pressed", self._key_pressed_cb)
+        self.add_controller(self._key_controller)
 
     def append(self, menu_item):
         """Add a menu item to the menu."""
@@ -309,6 +314,12 @@ class _PaletteMenuWidget(Gtk.Popover):
 
         return in_invoker
 
+    def _key_pressed_cb(self, controller, keyval, keycode, state):
+        if keyval == Gdk.KEY_Escape:
+            self.popdown()
+            return True
+        return False
+
     def _reevaluate_state(self):
         """Reevaluate mouse state and emit appropriate signals."""
         if self._entered:
@@ -343,7 +354,7 @@ class _PaletteWindowWidget(Gtk.Popover):
 
         self.add_css_class("palette")
         self.add_css_class("palette-popover")
-        self.set_has_arrow(False)
+        self.set_has_arrow(True)
         self.set_autohide(False)
 
         self._old_alloc = None

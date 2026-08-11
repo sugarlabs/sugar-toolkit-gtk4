@@ -95,7 +95,7 @@ class RadioToolButton(ToolButton):
         }
 
         .radio-tool-button:hover:not(.active) {
-            background: alpha(@theme_fg_color, 0.05);
+            background: rgba(255, 255, 255, 0.12);
         }
         """ % style.COLOR_BUTTON_GREY.get_html()
         style.apply_css_to_widget(self, css)
@@ -180,3 +180,9 @@ class RadioToolButton(ToolButton):
         nick="Active",
         blurb="Whether the radio button is active",
     )
+
+    def do_dispose(self):
+        if hasattr(self, '_group') and self in self._group:
+            self._group.remove(self)
+        self._group = []
+        super().do_dispose()

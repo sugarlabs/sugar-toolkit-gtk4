@@ -193,9 +193,6 @@ class ToolButton(Gtk.Button):
         else:
             self.get_palette().set_primary_text(tooltip)
 
-        # native tooltip as fallback
-        self.set_tooltip_text(tooltip)
-
     def get_tooltip(self) -> Optional[str]:
         return self._tooltip
 
