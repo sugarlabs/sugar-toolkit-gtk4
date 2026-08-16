@@ -1,4 +1,4 @@
-"""Main entry point for sugar-toolkit-gtk4."""
+﻿"""Main entry point for sugar-toolkit-gtk4."""
 
 import sys
 
@@ -9,7 +9,6 @@ print = debug_print
 
 
 def main():
-    # NOTE: Following is subject to change in future versions
     """Main entry point for testing the toolkit."""
     print("Sugar Toolkit GTK4 Python")
     print("=" * 25)

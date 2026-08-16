@@ -1,4 +1,4 @@
-# Copyright (C) 2007, Eduardo Silva <edsiper@gmail.com>
+﻿# Copyright (C) 2007, Eduardo Silva <edsiper@gmail.com>
 # Copyright (C) 2025 MostlyK
 #
 # This library is free software; you can redistribute it and/or
@@ -90,9 +90,7 @@ class MenuItem(Gtk.Button):
             self._label = Gtk.Label(label=text_label)
             self._label.set_halign(Gtk.Align.START)
             self._label.set_hexpand(True)
-            # Force label text to black
-            self._label.add_css_class("force-black")
-            style.apply_css_to_widget(self._label, ".force-black { color: #000000; }")
+            self._label.set_hexpand(True)
 
             if text_maxlen > 0:
                 self._label.set_ellipsize(style.ELLIPSIZE_MODE_DEFAULT)
@@ -106,11 +104,31 @@ class MenuItem(Gtk.Button):
 
         # Style the button to look like a menu item
         self.add_css_class("menuitem")
+        self.add_css_class("flat")
         self._apply_menu_item_styling()
 
         # Connect signals for accelerator handling
         self.connect("map", self._on_mapped)
         self.connect("unmap", self._on_unmapped)
+
+    def set_image(self, icon):
+        """
+        Set the icon of the menu item.
+        """
+        content_box = self.get_child()
+        if not content_box:
+            return
+            
+        # Remove existing icon if there is one
+        child = content_box.get_first_child()
+        while child:
+            if isinstance(child, Icon):
+                content_box.remove(child)
+                break
+            child = child.get_next_sibling()
+            
+        if icon:
+            content_box.prepend(icon)
 
     def _apply_menu_item_styling(self):
         """Apply CSS styling to make button look like a menu item."""
@@ -122,10 +140,10 @@ class MenuItem(Gtk.Button):
             padding: 4px 6px;
         }
         button.menuitem:hover {
-            background: alpha(@theme_selected_bg_color, 0.1);
+            background: alpha(currentColor, 0.1);
         }
         button.menuitem:active {
-            background: alpha(@theme_selected_bg_color, 0.2);
+            background: alpha(currentColor, 0.2);
         }
         """
         style.apply_css_to_widget(self, css)
@@ -143,7 +161,6 @@ class MenuItem(Gtk.Button):
         if self._accelerator is None:
             return
 
-        # Get the application and add accelerator
         app = Gio.Application.get_default()
         if app is None:
             logging.debug("No application available for accelerator")
@@ -232,6 +249,32 @@ class MenuItem(Gtk.Button):
         if self._label:
             return self._label.get_text()
         return ""
+
+    def get_submenu(self):
+        return getattr(self, '_submenu', None)
+
+    def set_submenu(self, submenu):
+        self._submenu = submenu
+        if hasattr(self, '_popover') and self._popover:
+            self._popover.unparent()
+            self._popover = None
+            
+        if submenu is not None:
+            self._popover = Gtk.PopoverMenu.new_from_model(submenu)
+            self._popover.set_parent(self)
+            self._popover.set_position(Gtk.PositionType.RIGHT)
+            
+            # Show popover when clicked
+            if not hasattr(self, '_popover_click_handler'):
+                self._popover_click_handler = self.connect('clicked', self._show_popover)
+        else:
+            if hasattr(self, '_popover_click_handler'):
+                self.disconnect(self._popover_click_handler)
+                del self._popover_click_handler
+
+    def _show_popover(self, button):
+        if hasattr(self, '_popover') and self._popover:
+            self._popover.popup()
 
     # Properties for compatibility
     accelerator = GObject.Property(

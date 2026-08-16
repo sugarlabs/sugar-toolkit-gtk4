@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
-from sugar3.activity import activityinstance
+import gi
+gi.require_version('Gtk', '4.0')
+
+from sugar4.activity import activityinstance
 
 activityinstance.main()

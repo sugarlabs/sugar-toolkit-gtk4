@@ -88,12 +88,12 @@ class Profile(object):
             logging.exception("Error reading public key")
             return None
 
-        magic = "ssh-dss "
+        magics = ("ssh-dss ", "ssh-rsa ", "ssh-ed25519 ")
         for line in lines:
             line = line.strip()
-            if not line.startswith(magic):
-                continue
-            return line[len(magic) :]
+            for magic in magics:
+                if line.startswith(magic):
+                    return line[len(magic) :]
         else:
             logging.error("Error parsing public key.")
             return None
@@ -120,13 +120,18 @@ class Profile(object):
             if line.startswith(
                 (
                     "-----BEGIN DSA PRIVATE KEY-----",
+                    "-----BEGIN RSA PRIVATE KEY-----",
                     "-----BEGIN OPENSSH PRIVATE KEY-----",
                 )
             ):
                 begin_found = True
                 continue
             if line.startswith(
-                ("-----END DSA PRIVATE KEY-----", "-----END OPENSSH PRIVATE KEY-----")
+                (
+                    "-----END DSA PRIVATE KEY-----",
+                    "-----END RSA PRIVATE KEY-----",
+                    "-----END OPENSSH PRIVATE KEY-----",
+                )
             ):
                 end_found = True
                 continue

@@ -19,10 +19,8 @@ Example:
 
         from sugar4.graphics.alert import Alert
 
-        # Create a new simple alert
         alert = Alert()
 
-        # Set the title and text body of the alert
         alert.props.title = _('Title of Alert Goes Here')
         alert.props.msg = _('Text message of alert goes here')
 
@@ -59,6 +57,8 @@ from gi.repository import Graphene
 from gi.repository import Gtk
 from gi.repository import GObject
 from gi.repository import GLib
+
+from gi.repository import PangoCairo
 
 from sugar4.graphics import style
 from sugar4.graphics.icon import Icon
@@ -108,7 +108,6 @@ class Alert(Gtk.Box):
         self._icon = None
         self._buttons = {}
 
-        # Set margin and spacing (replaces border_width)
         self.set_margin_top(style.DEFAULT_SPACING)
         self.set_margin_bottom(style.DEFAULT_SPACING)
         self.set_margin_start(style.DEFAULT_SPACING)
@@ -136,7 +135,18 @@ class Alert(Gtk.Box):
         self.append(self._buttons_box)
 
         self.add_css_class("sugar-alert")
-
+        
+        css = """
+        .sugar-alert {
+            background-color: black;
+            border: 2px solid #808080;
+            border-radius: 4px;
+        }
+        .sugar-alert label {
+            color: white;
+        }
+        """
+        style.apply_css_to_widget(self, css)
     def do_set_property(self, pspec, value):
         """
         Set alert property, GObject internal method.
@@ -155,8 +165,11 @@ class Alert(Gtk.Box):
                 self._msg_label.set_wrap(True)
         elif pspec.name == "icon":
             if self._icon != value:
+                if self._icon is not None:
+                    self.remove(self._icon)
                 self._icon = value
-                self.prepend(self._icon)
+                if self._icon is not None:
+                    self.prepend(self._icon)
 
     def do_get_property(self, pspec):
         """
@@ -219,9 +232,16 @@ class Alert(Gtk.Box):
         """
         button = Gtk.Button()
         self._buttons[response_id] = button
+        
         if icon is not None:
-            button.set_child(icon)
-        button.set_label(label)
+            box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=style.DEFAULT_PADDING)
+            box.append(icon)
+            text_label = Gtk.Label(label=label)
+            box.append(text_label)
+            button.set_child(box)
+        else:
+            button.set_label(label)
+            
         self._buttons_box.append(button)
         button.connect("clicked", self.__button_clicked_cb, response_id)
         return button
@@ -314,7 +334,6 @@ class _TimeoutIcon(Gtk.Widget):
         width = self.get_width()
         height = self.get_height()
 
-        # Create a cairo context from snapshot
         rect = Graphene.Rect()
         rect.init(0, 0, width, height)
         cr = snapshot.append_cairo(rect)
@@ -338,7 +357,7 @@ class _TimeoutIcon(Gtk.Widget):
             text_width, text_height = layout.get_pixel_size()
             cr.move_to(x - text_width / 2, y - text_height / 2)
             cr.set_source_rgba(color.red, color.green, color.blue, color.alpha)
-            layout.show_in_cairo_context(cr)
+            PangoCairo.show_layout(cr, layout)
 
     def set_text(self, text):
         self._text = str(text)

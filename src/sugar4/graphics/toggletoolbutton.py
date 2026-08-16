@@ -99,28 +99,75 @@ class ToggleToolButton(Gtk.ToggleButton):
         self._palette_invoker = ToolInvoker(self)
         self._accelerator = None
 
+        self.add_css_class("toolbar-button")
+        self.add_css_class("flat")
+        self.set_has_frame(False)
+        self.set_can_focus(True)
+
         if icon_name:
             self.set_icon_name(icon_name)
 
         # Connect to root changes and map signal to setup accelerator
         self.connect("notify::root", _on_root_changed)
         self.connect("map", self._on_mapped)
-        self.connect("destroy", self.__destroy_cb)
+
+        self._apply_toolbar_button_css()
+
+    def _apply_toolbar_button_css(self):
+        css = """
+        .toolbar-button {
+            border-radius: 6px;
+            margin: 2px;
+            padding: 6px;
+            min-width: 32px;
+            min-height: 32px;
+            background: transparent;
+            border: none;
+        }
+
+        .toolbar-button:hover {
+            background: alpha(currentColor, 0.1);
+        }
+
+        .toolbar-button:active,
+        .toolbar-button:checked {
+            background: alpha(currentColor, 0.2);
+            border: 1px solid alpha(currentColor, 0.3);
+            box-shadow: none;
+        }
+
+        .toolbar-button:focus {
+            outline: 2px solid rgb(53, 132, 228);
+            outline-offset: 2px;
+        }
+        """
+        try:
+            css_provider = Gtk.CssProvider()
+            css_provider.load_from_string(css)
+            self.get_style_context().add_provider(css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        except Exception as e:
+            import logging
+            logging.warning(f"Could not apply toolbar button CSS: {e}")
 
     def _on_mapped(self, widget):
         """Called when widget is mapped (visible and added to window)."""
         _add_accelerator(self)
 
-    def __destroy_cb(self, icon):
-        if self._palette_invoker is not None:
+    def do_dispose(self):
+        if getattr(self, "_palette_invoker", None) is not None:
             self._palette_invoker.detach()
+            self._palette_invoker = None
         # Remove accelerator action
         if hasattr(self, "_accel_action_name"):
             root = self.get_root()
             if root:
-                app = root.get_application()
+                app = getattr(root, "get_application", lambda: None)()
                 if app:
-                    app.remove_action(self._accel_action_name)
+                    try:
+                        app.remove_action(self._accel_action_name)
+                    except:
+                        pass
+        super().do_dispose()
 
     def set_icon_name(self, icon_name):
         """
@@ -213,9 +260,10 @@ class ToggleToolButton(Gtk.ToggleButton):
         """
         Render the toggle tool button using snapshot-based drawing.
         """
-        # Use snapshot-based rendering instead of legacy draw methods
-        # For now, just call the parent implementation
-        Gtk.ToggleButton.do_snapshot(self, snapshot)
+        child = self.get_first_child()
+        while child is not None:
+            self.snapshot_child(child, snapshot)
+            child = child.get_next_sibling()
 
         # Custom drawing can be implemented here using the snapshot API
         # if self.palette and self.palette.is_up():
@@ -230,6 +278,5 @@ class ToggleToolButton(Gtk.ToggleButton):
         # Call parent implementation first to handle toggle behavior
         Gtk.ToggleButton.do_clicked(self)
 
-        # Then handle palette
         if self.palette:
             self.palette.popdown(True)

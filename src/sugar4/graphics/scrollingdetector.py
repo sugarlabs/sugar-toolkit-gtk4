@@ -15,19 +15,18 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 
-'''
+"""
 ScrollingDetector emits signals when a ScrolledWindow starts and
 finish scrolling. Other widgets can use that information to
 avoid doing performance-expensive operations.
-'''
+"""
 
-
-from gi.repository import GObject
 from gi.repository import GLib
+from gi.repository import GObject
 
 
 class ScrollingDetector(GObject.GObject):
-    '''
+    """
     The scrolling detector sends signals when a scrolled window is scrolled and
     when a scrolled window stops scrolling. Only one `scroll-start`
     signal will be emitted until scrolling stops.
@@ -42,46 +41,48 @@ class ScrollingDetector(GObject.GObject):
 
         timeout (int): time in milliseconds to establish the interval for which
             scrolling is detected
-    '''
+    """
 
-    scroll_start_signal = GObject.Signal('scroll-start')
-    scroll_end_signal = GObject.Signal('scroll-end')
+    __gsignals__ = {
+        "scroll-start": (GObject.SignalFlags.RUN_FIRST, None, ()),
+        "scroll-end": (GObject.SignalFlags.RUN_FIRST, None, ()),
+    }
 
     def __init__(self, scrolled_window, timeout=100):
+        super().__init__()
         self._scrolled_window = scrolled_window
         self._timeout = timeout
         self.is_scrolling = False
         self._prev_value = 0
 
         self.connect_scrolled_window()
-        GObject.GObject.__init__(self)
 
     def connect_scrolled_window(self):
-        '''
+        """
         Connects scrolling detector to a scrolled window.
         Detects scrolling when the vertical scrollbar
         adjustment value is changed
 
         Should be used to link an instance of a scrolling detector
         to a Scrolled Window, after setting scrolled_window
-        '''
+        """
         adj = self._scrolled_window.get_vadjustment()
-        adj.connect('value-changed', self._value_changed_cb)
+        adj.connect("value-changed", self._value_changed_cb)
 
     def _check_scroll_cb(self, adj):
-        if (adj.props.value == self._prev_value):
+        if adj.props.value == self._prev_value:
             self.is_scrolling = False
-            self.scroll_end_signal.emit()
+            self.emit("scroll-end")
             return False
 
         self._prev_value = adj.props.value
         return True
 
     def _value_changed_cb(self, adj):
-        if (self.is_scrolling):
+        if self.is_scrolling:
             return
 
         self.is_scrolling = True
-        self.scroll_start_signal.emit()
+        self.emit("scroll-start")
         self._prev_value = adj.props.value
         GLib.timeout_add(self._timeout, self._check_scroll_cb, adj)
