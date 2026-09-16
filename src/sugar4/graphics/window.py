@@ -1,4 +1,4 @@
-# Copyright (C) 2007, Red Hat, Inc.
+﻿# Copyright (C) 2007, Red Hat, Inc.
 # Copyright (C) 2009, Aleksey Lim, Sayamindu Dasgupta
 # Copyright (C) 2025 MostlyK
 #
@@ -109,7 +109,6 @@ class UnfullscreenButton(Gtk.Window):
             geometry = monitor.get_geometry()
             x = geometry.x + geometry.width - self._width
             y = geometry.y
-            # Note: GTK4 window positioning is more limited
             # We rely on window manager for positioning
 
     def _on_monitors_changed(self, display):

@@ -27,6 +27,8 @@ if GTK_AVAILABLE:
         get_icon_state,
     )
     from sugar4.graphics.xocolor import XoColor
+    from sugar4.graphics.palette import Palette
+    from sugar4.graphics.palettewindow import CursorInvoker
 
 
 @unittest.skipUnless(GTK_AVAILABLE, "GTK4 not available")
@@ -180,6 +182,46 @@ class TestEventIcon(unittest.TestCase):
         icon.set_cache(False)
         self.assertFalse(icon.get_cache())
 
+    def test_palette_invoker_present(self):
+        """EventIcon owns a CursorInvoker as its palette invoker."""
+        icon = EventIcon(icon_name="edit-copy")
+        self.assertIsInstance(icon.get_palette_invoker(), CursorInvoker)
+        self.assertIs(icon.palette_invoker, icon.get_palette_invoker())
+
+    def test_create_palette_default_none(self):
+        """The default create_palette returns None (no palette)."""
+        icon = EventIcon()
+        self.assertIsNone(icon.create_palette())
+
+    def test_set_get_palette(self):
+        """set_palette stores a palette that get_palette returns."""
+        icon = EventIcon(icon_name="folder")
+        palette = Palette("Folder")
+        icon.set_palette(palette)
+        self.assertIs(icon.get_palette(), palette)
+        self.assertIs(icon.props.palette, palette)
+
+    def test_palette_invoker_toggle_and_cache(self):
+        """The invoker properties the shell sets are settable, mirrors BuddyIcon."""
+        icon = EventIcon(icon_name="folder")
+        icon.palette_invoker.props.toggle_palette = True
+        icon.palette_invoker.cache_palette = False
+        self.assertTrue(icon.palette_invoker.props.toggle_palette)
+        self.assertFalse(icon.palette_invoker.props.cache_palette)
+
+    def test_set_tooltip_creates_palette(self):
+        """set_tooltip installs a palette."""
+        icon = EventIcon(icon_name="folder")
+        icon.set_tooltip("a tooltip")
+        self.assertIsNotNone(icon.get_palette())
+
+    def test_set_palette_invoker_replaces(self):
+        """set_palette_invoker swaps the invoker."""
+        icon = EventIcon(icon_name="folder")
+        new_invoker = CursorInvoker()
+        icon.set_palette_invoker(new_invoker)
+        self.assertIs(icon.get_palette_invoker(), new_invoker)
+
 
 @unittest.skipUnless(GTK_AVAILABLE, "GTK4 not available")
 class TestCanvasIcon(unittest.TestCase):
@@ -200,6 +242,20 @@ class TestCanvasIcon(unittest.TestCase):
         """Test that CanvasIcon inherits from EventIcon."""
         icon = CanvasIcon()
         self.assertIsInstance(icon, EventIcon)
+
+    def test_connect_to_palette_pop_events(self):
+        """Prelight is held while a palette popped from the icon is up."""
+        icon = CanvasIcon(icon_name="folder")
+        self.assertFalse(icon._palette_up)
+
+        palette = Palette("Folder")
+        icon.connect_to_palette_pop_events(palette)
+
+        palette.emit("popup")
+        self.assertTrue(icon._palette_up)
+
+        palette.emit("popdown")
+        self.assertFalse(icon._palette_up)
 
 
 @unittest.skipUnless(GTK_AVAILABLE, "GTK4 not available")

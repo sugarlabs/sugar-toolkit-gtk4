@@ -28,6 +28,7 @@ supporting both regular toolbar buttons and expandable toolbar sections.
 """
 
 import math
+import itertools
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -63,7 +64,6 @@ class ToolbarButton(ToolButton):
         super().__init__(**kwargs)
 
         self.page_widget = None
-        self._expanded = False
 
         self.set_page(page)
 
@@ -77,11 +77,13 @@ class ToolbarButton(ToolButton):
 
     def _hierarchy_changed_cb(self, widget, pspec):
         parent = self.get_parent()
-        if hasattr(parent, "owner"):
-            if self.page_widget and self.get_root():
-                self._unparent()
+        if self.page_widget and self.get_root():
+            self._unparent()
+            if hasattr(parent, "owner"):
                 parent.owner.append(self.page_widget)
-                self.set_expanded(False)
+                self.page_widget.set_visible(self._expanded)
+            else:
+                self._move_page_to_palette()
 
     def get_toolbar_box(self):
         parent = self.get_parent()
@@ -113,11 +115,15 @@ class ToolbarButton(ToolButton):
 
     def is_in_palette(self):
         palette = self.get_palette()
-        return (
-            self.page is not None
-            and palette is not None
-            and self.page_widget.get_parent() == palette._widget
-        )
+        if self.page is None or palette is None or not palette._widget:
+            return False
+            
+        parent = self.page_widget.get_parent()
+        while parent:
+            if parent == palette._widget:
+                return True
+            parent = parent.get_parent()
+        return False
 
     def is_expanded(self):
         return self.page is not None and not self.is_in_palette()
@@ -136,7 +142,6 @@ class ToolbarButton(ToolButton):
 
         if not expanded:
             self._move_page_to_palette()
-            self._expanded = False
             self.remove_css_class("expanded")
             return
 
@@ -151,8 +156,8 @@ class ToolbarButton(ToolButton):
         self._unparent()
         _setup_page(self.page_widget, style.COLOR_TOOLBAR_GREY, box.get_padding())
         box.append(self.page_widget)
+        self.page_widget.set_visible(True)
 
-        self._expanded = True
         self.add_css_class("expanded")
 
     def _move_page_to_palette(self):
@@ -163,30 +168,40 @@ class ToolbarButton(ToolButton):
         self._unparent()
 
         palette = self.get_palette()
-        if isinstance(palette, _ToolbarPalette) and palette._widget:
-            palette._widget.set_child(self.page_widget)
+        if isinstance(palette, _ToolbarPalette):
+            palette.set_content(self.page_widget)
 
     def _unparent(self):
         """Remove the page widget from its current parent."""
         if self.page_widget is None:
             return
+            
         page_parent = self.page_widget.get_parent()
-        if page_parent is None:
-            return
+        if page_parent:
+            # PaletteWindow.set_content() sets the widget as the DIRECT child of the _widget wrapper.
+            # If _PaletteWindowWidget is implemented as a Gtk.Popover, we must use set_child(None)
+            # on the popover to avoid corrupting its internal state.
+            palette = self.get_palette()
+            if palette and hasattr(palette, "_widget") and palette._widget:
+                if hasattr(palette._widget, "get_child") and palette._widget.get_child() == self.page_widget:
+                    palette._widget.set_child(None)
+                    return
 
-        if isinstance(page_parent, Gtk.Window):
-            # For windows (like _PaletteWindowWidget), use set_child(None)
-            page_parent.set_child(None)
-        elif hasattr(page_parent, "remove"):
-            # For containers that have remove method
-            page_parent.remove(self.page_widget)
-        else:
-            # Fallback: try to unparent directly
-            self.page_widget.unparent()
+            # Fallback: If _PaletteWindowWidget is implemented as a Gtk.Window, it is caught here.
+            if isinstance(page_parent, Gtk.Window):
+                page_parent.set_child(None)
+            elif hasattr(page_parent, "remove"):
+                # For Gtk.Box containers (like self._content), use remove()
+                page_parent.remove(self.page_widget)
+            else:
+                self.page_widget.unparent()
 
     def do_snapshot(self, snapshot):
         """GTK4 drawing implementation with arrow indicator."""
-        Gtk.Widget.do_snapshot(self, snapshot)
+        child = self.get_first_child()
+        while child is not None:
+            self.snapshot_child(child, snapshot)
+            child = child.get_next_sibling()
 
         width = self.get_width()
         height = self.get_height()
@@ -207,16 +222,32 @@ class ToolbarButton(ToolButton):
         y = height - arrow_size
         x = (width - arrow_size) / 2
 
+        # Use the widget's foreground color
+        color = self.get_style_context().get_color()
+
+        # Draw a Cairo triangle for the arrow indicator
         rect = Graphene.Rect()
         rect.init(x, y, arrow_size, arrow_size)
-
-        color = Gdk.RGBA()
-        color.red = 0.5
-        color.green = 0.5
-        color.blue = 0.5
-        color.alpha = 1.0
-
-        snapshot.append_color(color, rect)
+        cr = snapshot.append_cairo(rect)
+        
+        cr.set_source_rgba(color.red, color.green, color.blue, color.alpha)
+        cr.translate(x, y)
+        
+        if angle == 0:
+            # Pointing UP (expanded)
+            cr.move_to(0, arrow_size)
+            cr.line_to(arrow_size, arrow_size)
+            cr.line_to(arrow_size / 2, 0)
+        else:
+            # Pointing DOWN (collapsed)
+            cr.move_to(0, 0)
+            cr.line_to(arrow_size, 0)
+            cr.line_to(arrow_size / 2, arrow_size)
+            
+        cr.close_path()
+        cr.fill()
+        
+        del cr
 
 
 class ToolbarBox(Gtk.Box):
@@ -237,7 +268,6 @@ class ToolbarBox(Gtk.Box):
 
         self._toolbar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self._toolbar.owner = self
-        # GTK4: Box doesn't have a "remove" signal, we'll handle removal differently
 
         self._toolbar_widget, self._toolbar_alignment = _embed_page(
             Gtk.Box(orientation=Gtk.Orientation.VERTICAL), self._toolbar
@@ -254,6 +284,7 @@ class ToolbarBox(Gtk.Box):
             background: {style.COLOR_TOOLBAR_GREY.get_css_rgba()};
         }}
         .toolbar-expandable-button {{
+            color: white;
             margin: 2px;
             border-radius: 4px;
         }}
@@ -293,7 +324,6 @@ class ToolbarBox(Gtk.Box):
     def set_padding(self, pad):
         self._padding = pad
         if self._toolbar_alignment:
-            # GTK4: Use margins instead of alignment padding
             self._toolbar_alignment.set_margin_start(pad)
             self._toolbar_alignment.set_margin_end(pad)
 
@@ -436,9 +466,18 @@ class _Box(Gtk.Box):
 
     def do_snapshot(self, snapshot):
         """Render palette using snapshot drawing."""
-        Gtk.Widget.do_snapshot(self, snapshot)
+        child = self.get_first_child()
+        while child is not None:
+            self.snapshot_child(child, snapshot)
+            child = child.get_next_sibling()
 
-        button_alloc = self._toolbar_button.get_allocation()
+        # In GTK4 get_allocation() is removed; translate button coordinates
+        # relative to self, then use get_width() for the button width.
+        btn_x = 0
+        btn_w = self._toolbar_button.get_width()
+        ok, bx, _by = self._toolbar_button.translate_coordinates(self, 0, 0)
+        if ok:
+            btn_x = bx
         my_width = self.get_width()
 
         if my_width > 0:
@@ -451,19 +490,20 @@ class _Box(Gtk.Box):
             line_width = style.FOCUS_LINE_WIDTH * 2
 
             rect1 = Graphene.Rect()
-            rect1.init(0, 0, button_alloc.x + style.FOCUS_LINE_WIDTH, line_width)
+            rect1.init(0, 0, btn_x + style.FOCUS_LINE_WIDTH, line_width)
             snapshot.append_color(color, rect1)
 
             rect2 = Graphene.Rect()
             rect2.init(
-                button_alloc.x + button_alloc.width - style.FOCUS_LINE_WIDTH,
+                btn_x + btn_w - style.FOCUS_LINE_WIDTH,
                 0,
-                my_width
-                - (button_alloc.x + button_alloc.width - style.FOCUS_LINE_WIDTH),
+                my_width - (btn_x + btn_w - style.FOCUS_LINE_WIDTH),
                 line_width,
             )
             snapshot.append_color(color, rect2)
 
+
+_toolbar_page_counter = itertools.count(1)
 
 def _setup_page(page_widget, color, hpad):
     if not page_widget:
@@ -477,16 +517,42 @@ def _setup_page(page_widget, color, hpad):
 
     page = _get_embedded_page(page_widget)
     if page:
-        css = f"""
-        * {{
-            background: {color.get_css_rgba()};
-        }}
-        """
-        style.apply_css_to_widget(page, css)
+        provider = getattr(page, "_toolbar_css_provider", None)
+        
+        if not provider:
+            cls_name = f"toolbar-page-{next(_toolbar_page_counter)}"
+            page.add_css_class(cls_name)
+            
+            provider = Gtk.CssProvider()
+            display = page.get_display()
+            if not display:
+                display = Gdk.Display.get_default()
+                
+            Gtk.StyleContext.add_provider_for_display(
+                display, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
+            page._toolbar_css_provider = provider
+            page._toolbar_css_class = cls_name
+            page._toolbar_css_color_rgba = None
+            
+            # Clean up the global provider when the widget dies
+            def on_destroy(w):
+                Gtk.StyleContext.remove_provider_for_display(display, provider)
+            page.connect("destroy", on_destroy)
+            
+        css_rgba = color.get_css_rgba()
+        if page._toolbar_css_color_rgba != css_rgba:
+            css = f"""
+            .{page._toolbar_css_class} {{
+                background: {css_rgba};
+            }}
+            """
+            provider.load_from_string(css)
+            page._toolbar_css_color_rgba = css_rgba
 
 
 def _embed_page(page_widget, page):
-    page.show()
+    page.set_visible(True)
 
     # Box instead of Alignment
     container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -495,10 +561,10 @@ def _embed_page(page_widget, page):
     # The toolbar should not absorb extra vertical space; keep it compact.
     container.set_vexpand(False)
     container.append(page)
-    container.show()
+    container.set_visible(True)
 
     page_widget.append(container)
-    page_widget.show()
+    page_widget.set_visible(True)
 
     return (page_widget, container)
 

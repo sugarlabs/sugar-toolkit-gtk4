@@ -14,6 +14,29 @@ from gi.repository import Gtk, Gdk
 from sugar4.activity import SimpleActivity
 from sugar4.graphics.icon import Icon, EventIcon, CanvasIcon
 from sugar4.graphics.xocolor import XoColor
+from sugar4.graphics.palette import Palette
+from sugar4.graphics.palettemenu import PaletteMenuBox, PaletteMenuItem
+
+
+class PaletteIcon(CanvasIcon):
+    """A CanvasIcon that pops up a palette via create_palette."""
+
+    def __init__(self, primary_text, **kwargs):
+        super().__init__(**kwargs)
+        self._primary_text = primary_text
+        self.palette_invoker.props.toggle_palette = True
+
+    def create_palette(self):
+        palette = Palette(self._primary_text)
+        menu_box = PaletteMenuBox()
+        palette.set_content(menu_box)
+        for label in ("Open", "Copy", "Remove"):
+            item = PaletteMenuItem(label)
+            menu_box.append_item(item)
+            item.set_visible(True)
+        menu_box.set_visible(True)
+        self.connect_to_palette_pop_events(palette)
+        return palette
 
 
 class IconExampleActivity(SimpleActivity):
@@ -79,6 +102,7 @@ class IconExampleActivity(SimpleActivity):
         self._add_badge_icons(main_box)
         self._add_event_icons(main_box)
         self._add_canvas_icons(main_box)
+        self._add_palette_icons(main_box)
         self._add_size_and_alpha_examples(main_box)
 
         self.set_canvas(scrolled)
@@ -281,6 +305,37 @@ class IconExampleActivity(SimpleActivity):
 
             wrapper.append(canvas_icon)
             hbox.append(wrapper)
+
+        vbox.append(hbox)
+        frame.set_child(vbox)
+        container.append(frame)
+
+    def _add_palette_icons(self, container):
+        """Add icons that pop up a palette on click or right click."""
+        frame = Gtk.Frame(label="Icons with Palettes")
+        frame.set_hexpand(True)
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        vbox.set_margin_start(10)
+        vbox.set_margin_end(10)
+        vbox.set_margin_top(10)
+        vbox.set_margin_bottom(10)
+        vbox.set_hexpand(True)
+
+        info_label = Gtk.Label(
+            label="Click or right-click these icons to pop up a palette:")
+        vbox.append(info_label)
+
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=15)
+        hbox.set_hexpand(True)
+        hbox.set_halign(Gtk.Align.CENTER)
+
+        for icon_name, label in [
+            ("folder", "Documents"),
+            ("network-wireless", "Network"),
+            ("system-users", "Friends"),
+        ]:
+            icon = PaletteIcon(label, icon_name=icon_name, pixel_size=64)
+            hbox.append(icon)
 
         vbox.append(hbox)
         frame.set_child(vbox)

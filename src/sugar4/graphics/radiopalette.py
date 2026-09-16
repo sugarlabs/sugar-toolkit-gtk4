@@ -1,4 +1,4 @@
-# Copyright (C) 2009, Aleksey Lim
+﻿# Copyright (C) 2009, Aleksey Lim
 # Copyright (C) 2025 MostlyK
 #
 # This library is free software; you can redistribute it and/or
@@ -93,7 +93,6 @@ class RadioMenuButton(ToolButton):
         invoker = self.get_palette_invoker()
         print(f"Got palette invoker: {invoker}")
         if invoker:
-            # In GTK4, we handle toggle behavior differently
             invoker.set_toggle_palette(True)
             print("Set toggle_palette to True")
 
@@ -236,7 +235,6 @@ class RadioPalette(Palette):
     def _on_button_clicked(self, button):
         print(f"RadioPalette._on_button_clicked called with button: {button}")
 
-        # First, make sure this button is active and others are not
         child = self.button_box.get_first_child()
         while child:
             if hasattr(child, "set_active"):

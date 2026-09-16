@@ -64,8 +64,6 @@ class IconEntry(Gtk.Entry):
     a built-in clear button that appears when text is present.
     """
 
-    __gtype_name__ = "SugarIconEntry"
-
     def __init__(self):
         GObject.GObject.__init__(self)
 
@@ -73,7 +71,7 @@ class IconEntry(Gtk.Entry):
         self._clear_button_added = False
         self._loader = _SVGLoader()
 
-        key_controller = Gtk.EventControllerKey()
+        key_controller = Gtk.EventControllerKey.new()
         key_controller.connect("key-pressed", self._keypress_event_cb)
         self.add_controller(key_controller)
 
@@ -153,14 +151,17 @@ class IconEntry(Gtk.Entry):
             viewport.height = float(height)
             handle.render_document(context, viewport)
 
-            pixbuf = Gdk.pixbuf_get_from_surface(surface, 0, 0, int(width), int(height))
-            if pixbuf is None:
-                logging.warning(
-                    "IconEntry set_icon_from_name: failed to render SVG icon '%s'.",
-                    name,
-                )
-                return
-            self.set_icon(position, pixbuf)
+            # GTK4: Gdk.pixbuf_get_from_surface() removed — build texture from
+            # raw Cairo ImageSurface bytes using Gdk.MemoryTexture.
+            data = bytes(surface.get_data())
+            gbytes = GLib.Bytes.new(data)
+            texture = Gdk.MemoryTexture.new(
+                int(width), int(height),
+                Gdk.MemoryFormat.B8G8R8A8_PREMULTIPLIED,
+                gbytes,
+                surface.get_stride(),
+            )
+            self.set_icon_from_paintable(position, texture)
         else:
             try:
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(
