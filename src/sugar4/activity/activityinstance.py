@@ -1,4 +1,4 @@
-# Copyright (C) 2006-2008, Red Hat, Inc.
+﻿# Copyright (C) 2006-2008, Red Hat, Inc.
 # Copyright (C) 2025 MostlyK
 #
 # This program is free software; you can redistribute it and/or modify
@@ -202,7 +202,6 @@ def main():
         invited=options.invited,
     )
 
-    # GTK4: Gtk.Application model
     app = Gtk.Application(application_id=bundle.get_bundle_id())
 
     def on_activate(app):

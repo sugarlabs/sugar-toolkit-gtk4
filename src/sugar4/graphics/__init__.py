@@ -43,6 +43,7 @@ from .iconentry import (
 # from .tray import (HTray, VTray, TrayButton, TrayIcon,
 #                    ALIGN_TO_START, ALIGN_TO_END, GRID_CELL_SIZE)
 # from .window import Window, UnfullscreenButton
+from .scrollingdetector import ScrollingDetector
 
 
 __all__ = [
@@ -60,6 +61,7 @@ __all__ = [
     "SMALL_ICON_SIZE",
     "STANDARD_ICON_SIZE",
     "LARGE_ICON_SIZE",
+    "ScrollingDetector",
     # "HTray", "VTray", "TrayButton", "TrayIcon",
     # "ALIGN_TO_START", "ALIGN_TO_END", "GRID_CELL_SIZE",
     # "Window", "UnfullscreenButton"

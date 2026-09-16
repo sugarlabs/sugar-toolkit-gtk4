@@ -1,4 +1,4 @@
-# Copyright (C) 2007, Red Hat, Inc.
+﻿# Copyright (C) 2007, Red Hat, Inc.
 # Copyright (C) 2025 MostlyK
 #
 # This library is free software; you can redistribute it and/or
@@ -205,7 +205,6 @@ class Toolbox(Gtk.Box):
 
         page = self._notebook.get_nth_page(index)
         if page and isinstance(page, Gtk.Box):
-            # Return the first child (the actual toolbar)
             child = page.get_first_child()
             return child
         return page

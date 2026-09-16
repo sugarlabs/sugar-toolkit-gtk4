@@ -109,6 +109,7 @@ class PaletteMenuBox(Gtk.Box):
     def __init__(self):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
         self.set_spacing(2)  # Small default spacing
+        self.add_css_class('palette-content-box')
 
     def append_item(
         self, item_or_widget, horizontal_padding=None, vertical_padding=None
@@ -165,6 +166,8 @@ class PaletteMenuBox(Gtk.Box):
         hbox.set_margin_end(horizontal_padding)
         hbox.append(widget)
 
+        widget.bind_property("visible", vbox, "visible", GObject.BindingFlags.SYNC_CREATE)
+
         return vbox
 
 
@@ -179,25 +182,15 @@ class PaletteMenuItemSeparator(Gtk.Separator):
     def __init__(self):
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL)
 
-        # Set minimum height for the separator
-        self.set_size_request(-1, style.DEFAULT_SPACING * 2)
+        # Set minimum height for the separator via CSS only
+
 
         self.add_css_class("palette-menu-separator")
         self._apply_separator_styling()
 
     def _apply_separator_styling(self):
-        """Apply CSS styling for the separator."""
-        css = """
-        separator.palette-menu-separator {
-            margin: 2px 6px;
-            min-height: 1px;
-            background: alpha(@theme_fg_color, 0.2);
-        }
-        """
-        try:
-            style.apply_css_to_widget(self, css)
-        except Exception as e:
-            logging.warning(f"Could not apply separator CSS: {e}")
+        """Styling is handled by sugar.css via .palette-menu-separator class rules."""
+        pass
 
 
 class PaletteMenuItem(Gtk.Button):
@@ -249,10 +242,6 @@ class PaletteMenuItem(Gtk.Button):
 
         # main horizontal box
         self._hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        self._hbox.set_margin_start(style.DEFAULT_PADDING)
-        self._hbox.set_margin_end(style.DEFAULT_PADDING)
-        self._hbox.set_margin_top(style.DEFAULT_PADDING // 2)
-        self._hbox.set_margin_bottom(style.DEFAULT_PADDING // 2)
 
         # icon if specified
         if icon_name is not None:
@@ -270,12 +259,6 @@ class PaletteMenuItem(Gtk.Button):
             self.label = Gtk.Label(label=text_label)
             self.label.set_halign(Gtk.Align.START)
             self.label.set_hexpand(True)
-            # Force black text
-            # TODO: Can also not do this based on feedback
-            self.label.add_css_class("force-black")
-            from sugar4.graphics import style as _style
-
-            _style.apply_css_to_widget(self.label, ".force-black { color: #000000; }")
 
             if text_maxlen > 0:
                 self.label.set_max_width_chars(text_maxlen)
@@ -291,42 +274,47 @@ class PaletteMenuItem(Gtk.Button):
         self.set_child(self._hbox)
 
         self.add_css_class("palette-menu-item")
+        self.add_css_class("flat")
         self._apply_menu_item_styling()
 
         # gesture controllers for hover effects
         self._setup_gestures()
 
-        # Connect to activate signal
-        self.connect("activate", self._clicked_cb)
+        # Connect to clicked signal so that clicks emit 'activate' for compatibility
+        super().connect("clicked", self._clicked_cb)
+
+    def connect(self, detailed_signal, handler, *args, **kwargs):
+        """Map legacy 'activate' signal to 'item-activated'."""
+        if detailed_signal == "activate":
+            detailed_signal = "item-activated"
+        return super().connect(detailed_signal, handler, *args, **kwargs)
+
+    def set_icon_widget(self, icon):
+        if self.icon is not None:
+            self._hbox.remove(self.icon)
+        self.icon = icon
+        if icon is not None:
+            self._hbox.prepend(icon)
 
     def _on_activate(self, button):
         """Handle button activation - emits our custom signal."""
         # this has been done to remove the conflict with Gtk.Button's activate
         self.emit("item-activated")
+        parent = self.get_parent()
+        while parent:
+            if isinstance(parent, Gtk.Popover):
+                parent.popdown()
+                break
+            parent = parent.get_parent()
 
     def _apply_menu_item_styling(self):
-        """Apply CSS styling to make button look like a menu item."""
-        css = """
-        button.palette-menu-item {
-            background: transparent;
-            border: none;
-            border-radius: 4px;
-            padding: 0;
-        }
-        button.palette-menu-item:hover {
-            background: alpha(@theme_selected_bg_color, 0.1);
-        }
-        button.palette-menu-item:active {
-            background: alpha(@theme_selected_bg_color, 0.2);
-        }
-        button.palette-menu-item:disabled {
-            opacity: 0.5;
-        }
-        """
-        try:
-            style.apply_css_to_widget(self, css)
-        except Exception as e:
-            logging.warning(f"Could not apply menu item CSS: {e}")
+        """Styling is handled by sugar.css via .palette-menu-item class rules."""
+        # The sugar.css file applies all palette-menu-item styling including:
+        # - background-color: transparent (normal)
+        # - background-color: @sugar_button_grey (hover)
+        # - color: @sugar_white (always white text)
+        # - padding: 8px 11px, border: none, min-height: 30px
+        pass
 
     def _setup_gestures(self):
         """Set up gesture controllers for hover effects."""
@@ -338,16 +326,22 @@ class PaletteMenuItem(Gtk.Button):
 
     def _clicked_cb(self, button):
         """Handle button click and emit activate signal."""
-        self.emit("activate")
+        self.emit("item-activated")
+        parent = self.get_parent()
+        while parent:
+            if isinstance(parent, Gtk.Popover):
+                parent.popdown()
+                break
+            parent = parent.get_parent()
 
     def _on_enter_notify(self, controller, x, y):
         """Handle mouse enter event."""
-        # TODO: Add Hover Effect
+        # CSS hover state handles the background color change automatically
         pass
 
     def _on_leave_notify(self, controller):
         """Handle mouse leave event."""
-        # TODO: Add hover Effect
+        # CSS hover state handles the background color change automatically
         pass
 
     def set_label(self, text_label):
@@ -360,6 +354,11 @@ class PaletteMenuItem(Gtk.Button):
         """
         if self.label:
             self.label.set_text(text_label)
+        else:
+            self.label = Gtk.Label(label=text_label)
+            self.label.set_halign(Gtk.Align.START)
+            self.label.set_hexpand(True)
+            self._hbox.append(self.label)
 
     def get_label(self):
         """
@@ -402,13 +401,6 @@ class PaletteMenuItem(Gtk.Button):
             self._accelerator_label = Gtk.Label(label=text)
             self._accelerator_label.set_halign(Gtk.Align.END)
             self._accelerator_label.add_css_class("dim-label")
-            # Force black text for accelerator label
-            self._accelerator_label.add_css_class("force-black")
-            from sugar4.graphics import style as _style
-
-            _style.apply_css_to_widget(
-                self._accelerator_label, ".force-black { color: #000000; }"
-            )
             self._hbox.append(self._accelerator_label)
 
     def set_sensitive(self, sensitive):

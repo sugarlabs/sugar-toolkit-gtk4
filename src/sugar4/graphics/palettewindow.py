@@ -45,7 +45,7 @@ print = debug_print
 
 
 def _get_pointer_position(widget):
-    """Get pointer position relative to widget ."""
+    """Get pointer position relative to widget."""
     global _pointer
     if _pointer is None:
         display = widget.get_display()
@@ -61,8 +61,20 @@ def _get_pointer_position(widget):
         return (0, 0)
 
     try:
-        device_position = surface.get_device_position(_pointer)
-        return (device_position[1], device_position[2])  # x, y
+        ret = surface.get_device_position(_pointer)
+        if len(ret) == 4:
+            _, x, y, _ = ret
+        else:
+            x, y, _ = ret
+
+        import gi
+        gi.require_version('Graphene', '1.0')
+        from gi.repository import Graphene
+        p = Graphene.Point().init(x, y)
+        success, tp = native.compute_point(widget, p)
+        if success:
+            return (tp.x, tp.y)
+        return (x, y)
     except Exception:
         return (0, 0)
 
@@ -108,6 +120,11 @@ class _PaletteMenuWidget(Gtk.Popover):
 
     def __init__(self):
         super().__init__()
+        
+        self.add_css_class("palette")
+        self.add_css_class("palette-popover")
+        self.set_has_arrow(True)
+        self.set_autohide(False)
 
         # container for menu items
         self._menu_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -131,6 +148,10 @@ class _PaletteMenuWidget(Gtk.Popover):
         self._click_controller = Gtk.GestureClick()
         self._click_controller.connect("released", self._button_release_cb)
         self.add_controller(self._click_controller)
+
+        self._key_controller = Gtk.EventControllerKey()
+        self._key_controller.connect("key-pressed", self._key_pressed_cb)
+        self.add_controller(self._key_controller)
 
     def append(self, menu_item):
         """Add a menu item to the menu."""
@@ -177,12 +198,44 @@ class _PaletteMenuWidget(Gtk.Popover):
             return
 
         self._invoker = invoker or self._invoker
-        if self._invoker and hasattr(self._invoker, "_widget"):
-            self.set_parent(self._invoker._widget)
+        if self._invoker:
+            parent_widget = None
+            if hasattr(self._invoker, "get_widget"):
+                parent_widget = self._invoker.get_widget()
+            elif hasattr(self._invoker, "parent") and isinstance(self._invoker.parent, Gtk.Widget):
+                parent_widget = self._invoker.parent
+            elif isinstance(self._invoker, Gtk.Widget):
+                parent_widget = self._invoker
+            elif hasattr(self._invoker, "_tool") and self._invoker._tool is not None:
+                parent_widget = self._invoker._tool
+            elif hasattr(self._invoker, "_widget") and self._invoker._widget is not None:
+                parent_widget = self._invoker._widget
+            elif hasattr(self._invoker, "_tree_view") and self._invoker._tree_view is not None:
+                parent_widget = self._invoker._tree_view
+
+            if parent_widget is not None:
+                current_parent = self.get_parent()
+                if current_parent is not None and current_parent is not parent_widget:
+                    self.unparent()
+                    current_parent = None
+                if current_parent is None:
+                    try:
+                        Gtk.Widget.set_parent(self, parent_widget)
+                    except Exception as e:
+                        logging.warning("set_parent failed on %s: %s", parent_widget, e)
+
+        if not self.get_parent():
+            logging.warning("Palette popup failed: No parent widget. parent_widget was %s, invoker was %s", parent_widget if 'parent_widget' in locals() else 'Not evaluated', self._invoker)
+            return
 
         self._entered = False
         self._mouse_in_palette = False
         self._mouse_in_invoker = False
+
+        if self._invoker and hasattr(self._invoker, "get_rect"):
+            rect = self._invoker.get_rect()
+            if rect and hasattr(self, "set_pointing_to"):
+                self.set_pointing_to(rect)
 
         super().popup()
         self._up = True
@@ -240,7 +293,6 @@ class _PaletteMenuWidget(Gtk.Popover):
         if not self._invoker:
             return False
 
-        # Check if click is in invoker area
         try:
             native = self.get_native()
             if native and native.get_surface():
@@ -262,6 +314,12 @@ class _PaletteMenuWidget(Gtk.Popover):
 
         return in_invoker
 
+    def _key_pressed_cb(self, controller, keyval, keycode, state):
+        if keyval == Gdk.KEY_Escape:
+            self.popdown()
+            return True
+        return False
+
     def _reevaluate_state(self):
         """Reevaluate mouse state and emit appropriate signals."""
         if self._entered:
@@ -280,8 +338,7 @@ class _PaletteMenuWidget(Gtk.Popover):
                 self.emit("enter-notify")
 
 
-class _PaletteWindowWidget(Gtk.Window):
-    """Palette window widget with modern event handling."""
+class _PaletteWindowWidget(Gtk.Popover):
 
     __gtype_name__ = "SugarPaletteWindowWidget"
 
@@ -294,21 +351,48 @@ class _PaletteWindowWidget(Gtk.Window):
         super().__init__()
 
         self._palette = palette
-        self.set_decorated(False)
-        self.set_resizable(False)
 
-        # Apply palette styling
         self.add_css_class("palette")
+        self.add_css_class("palette-popover")
+        self.set_has_arrow(True)
+        self.set_autohide(False)
 
         self._old_alloc = None
         self._invoker = None
         self._should_accept_focus = True
 
-        # Set up event controllers for GTK4
+        self._entered = False
+        self._mouse_in_palette = False
+        self._mouse_in_invoker = False
+        self._up = False
+
         self._motion_controller = Gtk.EventControllerMotion()
         self._motion_controller.connect("enter", self._enter_notify_cb)
         self._motion_controller.connect("leave", self._leave_notify_cb)
         self.add_controller(self._motion_controller)
+
+        self.connect("closed", self._on_closed)
+
+    def _on_closed(self, popover):
+        self._up = False
+
+    def get_rect(self):
+        """Get the bounding box of the palette."""
+        rect = Gdk.Rectangle()
+        rect.width = self.get_width()
+        rect.height = self.get_height()
+        try:
+            parent = self.get_parent()
+            if parent:
+                native = parent.get_native()
+                if native:
+                    success, transform = self.compute_transform(native)
+                    if success and transform:
+                        rect.x = int(transform.get_value(0, 3))
+                        rect.y = int(transform.get_value(1, 3))
+        except Exception:
+            pass
+        return rect
 
     def set_accept_focus(self, focus):
         """Set whether the window accepts focus."""
@@ -316,13 +400,14 @@ class _PaletteWindowWidget(Gtk.Window):
         self.set_can_focus(focus)
 
     def get_origin(self):
-        """Get the origin position of the window."""
-        # GTK4: Window position is managed by compositor
         return (0, 0)
+
+    def move(self, x, y):
+        pass
 
     def do_measure(self, orientation, for_size):
         """Calculate size requirements for the palette window."""
-        min_size, nat_size, min_baseline, nat_baseline = Gtk.Window.do_measure(
+        min_size, nat_size, min_baseline, nat_baseline = Gtk.Popover.do_measure(
             self, orientation, for_size
         )
 
@@ -338,34 +423,12 @@ class _PaletteWindowWidget(Gtk.Window):
 
         return min_size, nat_size, min_baseline, nat_baseline
 
-    def do_size_allocate(self, width, height, baseline):
-        """Allocate size to the palette window and its children."""
-        Gtk.Window.do_size_allocate(self, width, height, baseline)
-
-        allocation = Gdk.Rectangle()
-        allocation.x = 0
-        allocation.y = 0
-        allocation.width = width
-        allocation.height = height
-
-        if (
-            self._old_alloc is None
-            or self._old_alloc.x != allocation.x
-            or self._old_alloc.y != allocation.y
-            or self._old_alloc.width != allocation.width
-            or self._old_alloc.height != allocation.height
-        ):
-            self.queue_draw()
-
-        self._old_alloc = allocation
-
     def set_invoker(self, invoker):
         self._invoker = invoker
 
     def get_rect(self):
-        """Get the rectangle occupied by this window."""
         rect = Gdk.Rectangle()
-        rect.x = 0  # GTK4: Position managed by compositor
+        rect.x = 0
         rect.y = 0
         rect.width = self.get_width()
         rect.height = self.get_height()
@@ -373,32 +436,72 @@ class _PaletteWindowWidget(Gtk.Window):
 
     def set_content(self, widget):
         """Set the main content widget for the palette window."""
-        # Ensure _widget exists and is a Gtk.Window
-        if not hasattr(self, "_widget") or self._widget is None:
-            self._widget = Gtk.Window()
-        self._widget.set_child(widget)
+        self.set_child(widget)
 
     def _enter_notify_cb(self, controller, x, y):
         """Handle enter notify events."""
+        self._mouse_in_palette = True
         self.emit("enter-notify")
 
     def _leave_notify_cb(self, controller):
         """Handle leave notify events."""
+        self._mouse_in_palette = False
         self.emit("leave-notify")
 
     def popup(self, invoker=None):
         """Show the window."""
-        if self.get_visible():
+        if self._up:
             return
-        print("PaletteWindow.popup called")
-        self.present()
+
+        self._invoker = invoker or self._invoker
+        if self._invoker:
+            parent_widget = None
+            if hasattr(self._invoker, "get_widget"):
+                parent_widget = self._invoker.get_widget()
+            elif isinstance(self._invoker, Gtk.Widget):
+                parent_widget = self._invoker
+            elif hasattr(self._invoker, "_tool") and self._invoker._tool is not None:
+                parent_widget = self._invoker._tool
+            elif hasattr(self._invoker, "_widget") and self._invoker._widget is not None:
+                parent_widget = self._invoker._widget
+            elif hasattr(self._invoker, "_tree_view") and self._invoker._tree_view is not None:
+                parent_widget = self._invoker._tree_view
+            elif hasattr(self._invoker, "parent") and isinstance(self._invoker.parent, Gtk.Widget):
+                parent_widget = self._invoker.parent
+
+            if parent_widget is not None:
+                current_parent = self.get_parent()
+                if current_parent is not None and current_parent is not parent_widget:
+                    self.unparent()
+                    current_parent = None
+                if current_parent is None:
+                    try:
+                        Gtk.Widget.set_parent(self, parent_widget)
+                    except Exception as e:
+                        logging.warning("set_parent failed on %s: %s", parent_widget, e)
+
+        if not self.get_parent():
+            logging.warning("Palette popup failed: No parent widget.")
+            return
+
+        self._entered = False
+        self._mouse_in_palette = False
+        self._mouse_in_invoker = False
+
+        if self._invoker and hasattr(self._invoker, "get_rect"):
+            rect = self._invoker.get_rect()
+            if rect and hasattr(self, "set_pointing_to"):
+                self.set_pointing_to(rect)
+
+        super().popup()
+        self._up = True
 
     def popdown(self):
         """Hide the window."""
-        if not self.get_visible():
+        if not self._up:
             return
-        print("PaletteWindow.popdown called")
-        self.set_visible(False)
+        super().popdown()
+        self._up = False
 
 
 class MouseSpeedDetector(GObject.GObject):
@@ -510,6 +613,10 @@ class PaletteWindow(GObject.GObject):
             self._widget.connect("destroy", self.__destroy_cb)
             self._widget.connect("enter-notify", self.__enter_notify_cb)
             self._widget.connect("leave-notify", self.__leave_notify_cb)
+            self._widget.connect("map", self.__show_cb)
+            self._widget.connect("unmap", self.__hide_cb)
+            if hasattr(self._widget, "closed"):
+                self._widget.connect("closed", self.__hide_cb)
 
         # Set up key event controller for GTK4
         self._key_controller = Gtk.EventControllerKey()
@@ -533,9 +640,11 @@ class PaletteWindow(GObject.GObject):
                 self._widget.disconnect_by_func(self.__destroy_cb)
                 self._widget.disconnect_by_func(self.__enter_notify_cb)
                 self._widget.disconnect_by_func(self.__leave_notify_cb)
+                self._widget.disconnect_by_func(self.__show_cb)
+                self._widget.disconnect_by_func(self.__hide_cb)
 
             if self._widget is not None and hasattr(self, "_key_controller"):
-                self._widget.remove_controller(self._key_controller)
+                GLib.idle_add(self._widget.remove_controller, self._key_controller)
         except (TypeError, AttributeError):
             pass  # Already disconnected
 
@@ -543,7 +652,12 @@ class PaletteWindow(GObject.GObject):
 
     def destroy(self):
         if self._widget is not None:
-            self._widget.destroy()
+            self._teardown_widget()
+            if hasattr(self._widget, "popdown"):
+                self._widget.popdown()
+            if self._widget.get_parent() is not None:
+                self._widget.unparent()
+            self._widget = None  # Release reference for GTK4 GC
 
     def __destroy_cb(self, palette):
         """Handle widget destruction."""
@@ -617,6 +731,8 @@ class PaletteWindow(GObject.GObject):
         self.popup(immediate=immediate)
 
     def is_up(self):
+        if self._widget is not None:
+            return self._widget.get_mapped()
         return self._up
 
     def _set_effective_group_id(self, group_id):
@@ -647,36 +763,26 @@ class PaletteWindow(GObject.GObject):
         if self._widget is None:
             return
 
-        # Get size request
+        req = Gdk.Rectangle()
         try:
-            if hasattr(self._widget, "get_preferred_size"):
-                minimum, natural = self._widget.get_preferred_size()  # type: ignore
-                req = natural
-            else:
-                req = Gdk.Rectangle()
-                req.width = style.GRID_CELL_SIZE * 3
-                req.height = style.GRID_CELL_SIZE * 2
+            min_w, nat_w, _, _ = self._widget.measure(Gtk.Orientation.HORIZONTAL, -1)
+            min_h, nat_h, _, _ = self._widget.measure(Gtk.Orientation.VERTICAL, -1)
+            req.width = nat_w
+            req.height = nat_h
         except Exception:
-            req = Gdk.Rectangle()
             req.width = style.GRID_CELL_SIZE * 3
             req.height = style.GRID_CELL_SIZE * 2
 
-        # Handle menu widget size calculation
         if isinstance(self._widget, _PaletteMenuWidget):
             total_height = 0
             for child in self._widget.get_children():  # type: ignore
                 try:
-                    if hasattr(child, "get_preferred_size"):
-                        minimum, natural = child.get_preferred_size()
-                        total_height += natural.height
-                    else:
-                        total_height += style.GRID_CELL_SIZE
+                    _, nat_h, _, _ = child.measure(Gtk.Orientation.VERTICAL, -1)
+                    total_height += nat_h
                 except Exception:
                     total_height += style.GRID_CELL_SIZE
 
-            # Add border width
-            line_width = 2
-            total_height += line_width * 2
+            total_height += 4  # 2px border top + bottom
             req.height = total_height
 
         position = invoker.get_position_for_alignment(self._alignment, req)
@@ -687,14 +793,11 @@ class PaletteWindow(GObject.GObject):
             self._widget.move(position.x, position.y)
 
     def get_full_size_request(self):
-        """Get the full size request for the palette."""
         if self._widget and hasattr(self._widget, "get_preferred_size"):
             try:
-                return self._widget.get_preferred_size()[1]  # natural size
+                return self._widget.get_preferred_size()[1]
             except Exception:
                 pass
-
-        # Fallback
         req = Gdk.Rectangle()
         req.width = style.GRID_CELL_SIZE * 3
         req.height = style.GRID_CELL_SIZE * 2
@@ -702,7 +805,6 @@ class PaletteWindow(GObject.GObject):
 
     def popup(self, immediate=False):
         """Show the palette."""
-        print(f"PaletteWindow.popup called with immediate={immediate}")
         if self._widget is None:
             return
 
@@ -738,8 +840,6 @@ class PaletteWindow(GObject.GObject):
 
     def popdown(self, immediate=False):
         """Hide the palette."""
-        print(f"PaletteWindow.popdown called with immediate={immediate}")
-        print(f"PaletteWindow.popdown: is_up={self._up}, widget={self._widget}")
         self._popup_anim.stop()
         self._mouse_detector.stop()
 
@@ -749,10 +849,8 @@ class PaletteWindow(GObject.GObject):
             self._popdown_anim.stop()
             if self._widget is not None:
                 if hasattr(self._widget, "popdown"):
-                    print("PaletteWindow.popdown: calling widget.popdown()")
                     self._widget.popdown()
                 else:
-                    print("PaletteWindow.popdown: setting widget invisible")
                     self._widget.set_visible(False)
 
     def on_invoker_enter(self):
@@ -781,16 +879,9 @@ class PaletteWindow(GObject.GObject):
         self.popup(immediate=True)
 
     def _invoker_toggle_state_cb(self, invoker):
-        print(f"PaletteWindow._invoker_toggle_state_cb called with invoker={invoker}")
         if self.is_up():
-            print(
-                "PaletteWindow._invoker_toggle_state_cb: palette is up, calling popdown"
-            )
             self.popdown(immediate=True)
         else:
-            print(
-                "PaletteWindow._invoker_toggle_state_cb: palette is down, calling popup"
-            )
             self.popup(immediate=True)
 
     def __enter_notify_cb(self, widget):
@@ -806,12 +897,70 @@ class PaletteWindow(GObject.GObject):
             self.popdown()
             return True
 
+    def _check_mouse_outside(self):
+        if not self._up:
+            return False
+
+        if not self._invoker or getattr(self._invoker, "locked", False):
+            return False
+
+        if not self._widget:
+            return False
+
+        native = self._widget.get_native()
+        if not native or not native.get_surface():
+            return True
+
+        try:
+            surface = native.get_surface()
+            device_position = surface.get_device_position(_pointer)
+            if not device_position:
+                return True
+            root_x, root_y = device_position[1], device_position[2]
+        except Exception:
+            return True
+
+        from gi.repository import Graphene
+
+        in_invoker = False
+        invoker_widget = self._invoker.get_widget()
+        if invoker_widget:
+            try:
+                success, p_invoker = native.compute_point(
+                    invoker_widget, Graphene.Point().init(root_x, root_y)
+                )
+                if success:
+                    in_invoker = (0 <= p_invoker.x <= invoker_widget.get_width() and
+                                  0 <= p_invoker.y <= invoker_widget.get_height())
+            except Exception:
+                pass
+
+        in_popover = False
+        try:
+            success, p_popover = native.compute_point(
+                self._widget, Graphene.Point().init(root_x, root_y)
+            )
+            if success:
+                in_popover = (0 <= p_popover.x <= self._widget.get_width() and
+                              0 <= p_popover.y <= self._widget.get_height())
+        except Exception:
+            pass
+
+        if not in_invoker and not in_popover:
+            self.popdown()
+            return False
+
+        return True
+
     def __show_cb(self, widget):
         if self._invoker is not None and hasattr(self._invoker, "notify_popup"):
             self._invoker.notify_popup()
 
         self._up = True
         self.emit("popup")
+
+        # Start tracking pointer to auto-hide palette when mouse leaves both areas
+        GLib.timeout_add(100, self._check_mouse_outside)
 
     def __hide_cb(self, widget):
         if self._invoker and hasattr(self._invoker, "notify_popdown"):
@@ -911,7 +1060,8 @@ class Invoker(GObject.GObject):
     def detach(self):
         self.parent = None
         if self._palette is not None:
-            self._palette.destroy()
+            self._palette.popdown(immediate=True)
+            self._palette.unparent()
             self._palette = None
 
     def _get_position_for_alignment(self, alignment, palette_dim):
@@ -1113,9 +1263,7 @@ class Invoker(GObject.GObject):
         self.emit("right-click")
 
     def notify_toggle_state(self):
-        print("ToolInvoker.notify_toggle_state called")
         self._ensure_palette_exists()
-        print("ToolInvoker emitting 'toggle-state' signal")
         self.emit("toggle-state")
 
     def _process_event(self, x, y):
@@ -1130,10 +1278,6 @@ class Invoker(GObject.GObject):
         if self._palette is not None:
             self._palette.popdown(immediate=True)
             self._palette.props.invoker = None
-            GLib.idle_add(
-                lambda old_palette=self._palette: old_palette.destroy(),
-                priority=GLib.PRIORITY_LOW,
-            )  # type: ignore
 
         self._palette = palette
 
@@ -1187,7 +1331,9 @@ class Invoker(GObject.GObject):
     def get_toplevel(self):
         """Get the toplevel window - implemented by subclasses."""
         if self.parent:
-            return self.parent.get_root()
+            root = self.parent.get_root()
+            if isinstance(root, Gtk.Root):
+                return root
         return None
 
 
@@ -1226,17 +1372,37 @@ class WidgetInvoker(Invoker):
         self._setup_controllers()
         self.attach(parent)
 
+    def _remove_controllers(self):
+        if self._widget:
+            if self._motion_controller:
+                try:
+                    self._widget.remove_controller(self._motion_controller)
+                except Exception:
+                    pass
+                self._motion_controller = None
+            if self._click_controller:
+                try:
+                    self._widget.remove_controller(self._click_controller)
+                except Exception:
+                    pass
+                self._click_controller = None
+            if self._long_press_gesture:
+                try:
+                    self._widget.remove_controller(self._long_press_gesture)
+                except Exception:
+                    pass
+                self._long_press_gesture = None
+
     def _setup_controllers(self):
         """Set up event controllers for palette interaction."""
         if not self._widget:
             return
 
+        self._remove_controllers()
+
         # Ensure widget is focusable and sensitive for event handling
         self._widget.set_can_focus(True)
         self._widget.set_sensitive(True)
-        print(
-            f"WidgetInvoker._setup_controllers: set_can_focus and set_sensitive for {self._widget}"
-        )
 
         # Motion controller for enter/leave events
         self._motion_controller = Gtk.EventControllerMotion()
@@ -1257,49 +1423,26 @@ class WidgetInvoker(Invoker):
         # Connect to clicked signal if available
         try:
             if GObject.signal_lookup("clicked", self._widget):
-                print(
-                    f"WidgetInvoker._setup_controllers: connecting to 'clicked' signal for {self._widget}"
-                )
                 self._widget.connect("clicked", self.__click_event_cb)
         except (TypeError, AttributeError):
             pass
 
     def detach(self):
-        if self._widget:
-            try:
-                if self._motion_controller:
-                    self._widget.remove_controller(self._motion_controller)
-                if self._click_controller:
-                    self._widget.remove_controller(self._click_controller)
-                if self._long_press_gesture:
-                    self._widget.remove_controller(self._long_press_gesture)
-            except Exception:
-                pass
-
+        self._remove_controllers()
         super().detach()
 
     def get_rect(self):
         if not self._widget:
             return Gdk.Rectangle()
 
+        # Since we attach the Popover to self._widget, pointing_to must be
+        # in local widget coordinates.
         width = self._widget.get_width()
         height = self._widget.get_height()
 
-        # Get widget position - GTK4
-        x = y = 0
-        try:
-            native = self._widget.get_native()
-            if native:
-                success, transform = self._widget.compute_transform(native)
-                if success and transform:
-                    x = transform.get_value(0, 3)
-                    y = transform.get_value(1, 3)
-        except Exception:
-            x = y = 0
-
         rect = Gdk.Rectangle()
-        rect.x = int(x)
-        rect.y = int(y)
+        rect.x = 0
+        rect.y = 0
         rect.width = width
         rect.height = height
         return rect
@@ -1311,14 +1454,12 @@ class WidgetInvoker(Invoker):
         if not self.parent:
             return
 
-        allocation = self.parent.get_allocation()
         context = self.parent.get_style_context()
         context.add_class("toolitem")
         context.add_class("palette-down")
 
         gap = _calculate_gap(self.get_rect(), palette.get_rect())
         if gap:
-            # GTK4: Would need to use snapshot API for drawing
             # TODO
             pass
 
@@ -1329,29 +1470,30 @@ class WidgetInvoker(Invoker):
         self.notify_mouse_enter()
 
     def __leave_notify_event_cb(self, controller):
+        if self._widget:
+            try:
+                x, y = _get_pointer_position(self._widget)
+                width = self._widget.get_width()
+                height = self._widget.get_height()
+                if 0 <= x <= width and 0 <= y <= height:
+                    return
+            except Exception:
+                pass
         self.notify_mouse_leave()
 
     def __button_release_event_cb(self, gesture, n_press, x, y):
         button = gesture.get_current_button()
 
-        print(
-            f"ToolInvoker.__button_release_event_cb called: button={button}, n_press={n_press}, x={x}, y={y}"
-        )
         if button == 3:  # Right click
-            print("ToolInvoker: right click detected")
             self.notify_right_click(x, y)
             return True
         elif button == 1:  # Left click
-            print("ToolInvoker: left click detected")
             if self._lock_palette and not self.locked:
                 self.locked = True
                 if hasattr(self.parent, "set_expanded"):
                     self.parent.set_expanded(True)  # type: ignore
 
             if self._toggle_palette:
-                print(
-                    "ToolInvoker: toggle_palette is True, calling notify_toggle_state"
-                )
                 self.notify_toggle_state()
                 return True
         return False
@@ -1361,7 +1503,6 @@ class WidgetInvoker(Invoker):
         self.notify_right_click(x, y)
 
     def __click_event_cb(self, widget):
-        print(f"WidgetInvoker.__click_event_cb: 'clicked' signal received for {widget}")
         if not self._long_pressed_recognized:
             if self._lock_palette and not self.locked:
                 self.locked = True
@@ -1369,9 +1510,6 @@ class WidgetInvoker(Invoker):
                     self.parent.set_expanded(True)  # type: ignore
 
             if self._toggle_palette:
-                print(
-                    "WidgetInvoker.__click_event_cb: toggle_palette is True, calling notify_toggle_state"
-                )
                 self.notify_toggle_state()
         self._long_pressed_recognized = False
 
@@ -1389,7 +1527,9 @@ class WidgetInvoker(Invoker):
 
     def get_toplevel(self):
         if self._widget:
-            return self._widget.get_root()
+            root = self._widget.get_root()
+            if isinstance(root, Gtk.Root):
+                return root
         return None
 
     def notify_popup(self):
@@ -1419,10 +1559,34 @@ class CursorInvoker(Invoker):
         if parent:
             self.attach(parent)
 
+    def _remove_controllers(self):
+        if self.parent:
+            if self._motion_controller:
+                try:
+                    self.parent.remove_controller(self._motion_controller)
+                except Exception:
+                    pass
+                self._motion_controller = None
+            if self._click_controller:
+                try:
+                    self.parent.remove_controller(self._click_controller)
+                except Exception:
+                    pass
+                self._click_controller = None
+            if self._long_press_gesture:
+                try:
+                    self.parent.remove_controller(self._long_press_gesture)
+                except Exception:
+                    pass
+                self._long_press_gesture = None
+
     def attach(self, parent):
+        self.detach()
         super().attach(parent)
 
         if self.parent:
+            self._remove_controllers()
+
             try:
                 self._pointer_position = _get_pointer_position(self.parent)
             except Exception:
@@ -1444,17 +1608,7 @@ class CursorInvoker(Invoker):
 
     def detach(self):
         """Detach from the parent."""
-        if self.parent:
-            try:
-                if self._motion_controller:
-                    self.parent.remove_controller(self._motion_controller)
-                if self._click_controller:
-                    self.parent.remove_controller(self._click_controller)
-                if self._long_press_gesture:
-                    self.parent.remove_controller(self._long_press_gesture)
-            except Exception:
-                pass
-
+        self._remove_controllers()
         super().detach()
 
     def get_rect(self):
@@ -1480,7 +1634,19 @@ class CursorInvoker(Invoker):
         self.notify_mouse_enter()
 
     def __leave_notify_event_cb(self, controller):
+        if self.parent:
+            try:
+                x, y = _get_pointer_position(self.parent)
+                width = self.parent.get_width()
+                height = self.parent.get_height()
+                if 0 <= x <= width and 0 <= y <= height:
+                    return
+            except Exception:
+                pass
         self.notify_mouse_leave()
+
+    def get_widget(self):
+        return self.parent
 
     def __button_release_event_cb(self, gesture, n_press, x, y):
         if self._long_pressed_recognized:
@@ -1502,7 +1668,9 @@ class CursorInvoker(Invoker):
 
     def get_toplevel(self):
         if self.parent:
-            return self.parent.get_root()
+            root = self.parent.get_root()
+            if isinstance(root, Gtk.Root):
+                return root
         return None
 
 
@@ -1607,10 +1775,13 @@ class TreeViewInvoker(Invoker):
             try:
                 if self._motion_controller:
                     self._tree_view.remove_controller(self._motion_controller)
+                    self._motion_controller = None
                 if self._click_controller:
                     self._tree_view.remove_controller(self._click_controller)
+                    self._click_controller = None
                 if self._long_press_gesture:
                     self._tree_view.remove_controller(self._long_press_gesture)
+                    self._long_press_gesture = None
             except Exception:
                 pass
 
@@ -1632,22 +1803,9 @@ class TreeViewInvoker(Invoker):
                 cell_area.x, cell_area.y
             )
 
-            # Get widget position in root coordinates
-            root_x = root_y = 0
-            try:
-                native = self._tree_view.get_native()
-                if native:
-                    success, transform = self._tree_view.compute_transform(native)
-                    if success and transform:
-                        root_x = transform.get_value(0, 3) + widget_x
-                        root_y = transform.get_value(1, 3) + widget_y
-            except Exception:
-                root_x = widget_x
-                root_y = widget_y
-
             rect = Gdk.Rectangle()
-            rect.x = int(root_x)
-            rect.y = int(root_y)
+            rect.x = int(widget_x)
+            rect.y = int(widget_y)
             rect.width = cell_area.width
             rect.height = cell_area.height
             return rect
@@ -1657,16 +1815,22 @@ class TreeViewInvoker(Invoker):
             rect.width = rect.height = 50
             return rect
 
+    def get_widget(self):
+        return self._tree_view
+
     def get_toplevel(self):
         if self._tree_view:
-            return self._tree_view.get_root()
+            root = self._tree_view.get_root()
+            if isinstance(root, Gtk.Root):
+                return root
         return None
 
     def __motion_notify_event_cb(self, controller, x, y):
         if not self._tree_view:
             return
 
-        here = self._tree_view.get_path_at_pos(int(x), int(y))
+        tx, ty = self._tree_view.convert_widget_to_tree_coords(int(x), int(y))
+        here = self._tree_view.get_path_at_pos(tx, ty)
         if here is None:
             if self._path is not None:
                 self.notify_mouse_leave()
@@ -1701,7 +1865,8 @@ class TreeViewInvoker(Invoker):
 
     def __button_release_event_cb(self, gesture, n_press, x, y):
         x, y = int(x), int(y)
-        here = self._tree_view.get_path_at_pos(x, y)  # type: ignore
+        tx, ty = self._tree_view.convert_widget_to_tree_coords(x, y)
+        here = self._tree_view.get_path_at_pos(tx, ty)  # type: ignore
         if here is None:
             return False
 
@@ -1711,11 +1876,17 @@ class TreeViewInvoker(Invoker):
 
         button = gesture.get_current_button()
         if button == 1:
+            # Deny the sequence so TreeView's internal row-activation gesture receives it
+            sequence = gesture.get_current_sequence()
+            if sequence:
+                gesture.set_state(sequence, Gtk.EventSequenceState.DENIED)
+            
             # Left mouse button
             if self.palette is not None:
                 self.palette.popdown(immediate=True)
+                self.palette = None
 
-            # Handle cell renderer click
+            # Handle cell renderer click manually because GTK4 TreeView single-click doesn't reliably trigger do_activate
             if column and hasattr(column, "get_cells"):
                 cells = column.get_cells()
                 if cells:
@@ -1725,7 +1896,8 @@ class TreeViewInvoker(Invoker):
                         and cellrenderer is not None
                         and isinstance(cellrenderer, CellRendererIcon)
                     ):
-                        cellrenderer.emit("clicked", path)  # type: ignore
+                        cellrenderer.emit("clicked", path.to_string())  # type: ignore
+
             return False
         elif button == 3:
             # Right mouse button
@@ -1735,10 +1907,9 @@ class TreeViewInvoker(Invoker):
         return False
 
     def __long_pressed_event_cb(self, gesture, x, y):
-        if not self._tree_view:
-            return
-
-        here = self._tree_view.get_path_at_pos(x, y)
+        x, y = int(x), int(y)
+        tx, ty = self._tree_view.convert_widget_to_tree_coords(x, y)
+        here = self._tree_view.get_path_at_pos(tx, ty)  # type: ignore
         if here is None:
             return
 

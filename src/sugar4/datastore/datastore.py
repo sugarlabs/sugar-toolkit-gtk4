@@ -35,8 +35,8 @@ from sugar4 import mime
 from sugar4 import dispatch
 from sugar4.profile import get_color
 
-DS_DBUS_SERVICE = "org.laptop.sugar4.DataStore"
-DS_DBUS_INTERFACE = "org.laptop.sugar4.DataStore"
+DS_DBUS_SERVICE = "org.laptop.sugar.DataStore"
+DS_DBUS_INTERFACE = "org.laptop.sugar.DataStore"
 DS_DBUS_PATH = "/org/laptop/sugar/DataStore"
 
 _data_store = None

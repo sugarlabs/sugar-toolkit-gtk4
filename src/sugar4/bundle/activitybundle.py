@@ -1,4 +1,4 @@
-# Copyright (C) 2007, Red Hat, Inc.
+﻿# Copyright (C) 2007, Red Hat, Inc.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -251,7 +251,6 @@ class ActivityBundle(Bundle):
                 if nelang not in nelangs:
                     nelangs.append(nelang)
 
-        # Finally, select a language
         for lang in nelangs:
             linfo_path = os.path.join("locale", lang, "activity.linfo")
             linfo_file = self.get_file(linfo_path)
