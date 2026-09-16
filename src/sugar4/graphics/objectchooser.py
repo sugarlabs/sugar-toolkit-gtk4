@@ -20,13 +20,13 @@ STABLE.
 """
 
 import logging
-import cairo
-import io
 
 from gi.repository import GObject
 from gi.repository import Gtk
 from gi.repository import Gdk
 from gi.repository import GdkPixbuf
+from gi.repository import GLib
+from gi.repository import Gio
 import dbus
 
 from sugar4.datastore import datastore
@@ -81,46 +81,19 @@ def get_preview_pixbuf(preview_data, width=-1, height=-1):
 
     if len(preview_data) > 4:
         try:
-            # Handle both base64 encoded and direct PNG data
             if isinstance(preview_data, str):
                 import base64
-
                 preview_data = base64.b64decode(preview_data)
             elif isinstance(preview_data, bytes):
-                # Check if it's base64 encoded
                 if preview_data[1:4] != b"PNG":
                     import base64
-
                     preview_data = base64.b64decode(preview_data)
 
-            # Create pixbuf from PNG data
-            png_file = io.BytesIO(preview_data)
-
-            # Load image and scale to dimensions
-            surface = cairo.ImageSurface.create_from_png(png_file)
-            png_width = surface.get_width()
-            png_height = surface.get_height()
-
-            # Calculate scaling to fit within target dimensions
-            scale_w = width / png_width
-            scale_h = height / png_height
-            scale = min(scale_w, scale_h)
-
-            # Create scaled surface
-            scaled_width = int(png_width * scale)
-            scaled_height = int(png_height * scale)
-
-            preview_surface = cairo.ImageSurface(
-                cairo.FORMAT_ARGB32, scaled_width, scaled_height
-            )
-            cr = cairo.Context(preview_surface)
-            cr.scale(scale, scale)
-            cr.set_source_surface(surface)
-            cr.paint()
-
-            # Convert to pixbuf
-            pixbuf = Gdk.pixbuf_get_from_surface(
-                preview_surface, 0, 0, scaled_width, scaled_height
+            # Load and scale via GdkPixbuf directly (no Cairo surface needed).
+            stream = GLib.Bytes.new(preview_data)
+            gstream = Gio.MemoryInputStream.new_from_bytes(stream)
+            pixbuf = GdkPixbuf.Pixbuf.new_from_stream_at_scale(
+                gstream, width, height, True, None
             )
         except Exception:
             logging.exception("Error while loading the preview")
