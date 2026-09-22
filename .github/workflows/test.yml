@@ -1,0 +1,46 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A second push to a PR makes the first run irrelevant.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # PyGObject has no wheels, so it is built against the system
+      # girepository and cairo. gir1.2-gtk-4.0 supplies the Gtk 4.0
+      # typelib that `gi.require_version("Gtk", "4.0")` looks for.
+      - name: Install GTK4 and the PyGObject build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libgirepository1.0-dev \
+            libcairo2-dev \
+            pkg-config \
+            python3-dev \
+            libgtk-4-dev \
+            gir1.2-gtk-4.0 \
+            xvfb
+
+      - name: Install the package and its test extra
+        run: pip install -e ".[test]"
+
+      # Constructing a GTK widget needs a display even when nothing is
+      # shown, so the suite runs under a virtual one.
+      - name: Run the test suite
+        run: xvfb-run -a pytest tests/ -v
