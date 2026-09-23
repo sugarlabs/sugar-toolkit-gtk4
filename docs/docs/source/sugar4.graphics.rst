@@ -76,6 +76,14 @@ sugar4.graphics.palettewindow module
    :show-inheritance:
    :undoc-members:
 
+sugar4.graphics.progressicon module
+----------------------------------
+
+.. automodule:: sugar4.graphics.progressicon
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 sugar4.graphics.radiopalette module
 ----------------------------------
 
