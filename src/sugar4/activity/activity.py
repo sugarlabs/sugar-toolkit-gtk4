@@ -187,7 +187,7 @@ except ImportError:
 
 import dbus
 
-from sugar4 import env, util
+from sugar4 import env, util, power
 from sugar4.bundle.activitybundle import get_bundle_instance
 from sugar4.bundle.helpers import bundle_from_dir
 from sugar4.datastore import datastore
@@ -1081,9 +1081,9 @@ class Activity(Window):
             return
 
         # Power management for GTK4
-        # power_manager = power.get_power_manager()
-        # if power_manager.suspend_breaks_collaboration():
-        #     power_manager.inhibit_suspend()
+        power_manager = power.get_power_manager()
+        if power_manager.suspend_breaks_collaboration():
+            power_manager.inhibit_suspend()
 
         self.present()
         self.emit("joined")
@@ -1126,9 +1126,9 @@ class Activity(Window):
         activity.props.name = self._jobject.metadata["title"]
 
         # Power management for GTK4
-        # power_manager = power.get_power_manager()
-        # if power_manager.suspend_breaks_collaboration():
-        #     power_manager.inhibit_suspend()
+        power_manager = power.get_power_manager()
+        if power_manager.suspend_breaks_collaboration():
+            power_manager.inhibit_suspend()
 
         self.shared_activity = activity
         self.shared_activity.connect("notify::private", self.__privacy_changed_cb)
@@ -1353,7 +1353,7 @@ class Activity(Window):
         self._session.unregister(self)
 
         # Power management for GTK4
-        # power.get_power_manager().shutdown()
+        power.get_power_manager().shutdown()
 
     def _do_close(self, skip_save):
         """Internal close method."""
