@@ -139,12 +139,14 @@ class LRU:
     Copyright 2003 Josiah Carlson.
     """
 
-    def __init__(self, count, pairs=[]):
+    def __init__(self, count, pairs=None):
         # pylint: disable=W0102,W0612
         self.count = max(count, 1)
         self.d = {}
         self.first = None
         self.last = None
+        if pairs is None:
+            pairs = []
         for key, value in pairs:
             self[key] = value
 
