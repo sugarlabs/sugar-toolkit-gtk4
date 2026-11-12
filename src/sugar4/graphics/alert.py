@@ -106,12 +106,6 @@ class Alert(Gtk.Box):
         self._icon = None
         self._buttons = {}
 
-        self.set_margin_top(style.DEFAULT_SPACING)
-        self.set_margin_bottom(style.DEFAULT_SPACING)
-        self.set_margin_start(style.DEFAULT_SPACING)
-        self.set_margin_end(style.DEFAULT_SPACING)
-        self.set_spacing(style.DEFAULT_SPACING)
-
         self._msg_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self._title_label = Gtk.Label()
         self._title_label.set_halign(Gtk.Align.START)
