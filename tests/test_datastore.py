@@ -16,10 +16,10 @@ class TestDSMetadata(unittest.TestCase):
     def test_metadata_creation_empty(self):
         """Test creating empty metadata."""
         metadata = DSMetadata()
-        self.assertIn("activity", metadata._properties)
-        self.assertIn("activity_id", metadata._properties)
-        self.assertIn("mime_type", metadata._properties)
-        self.assertIn("title_set_by_user", metadata._properties)
+        self.assertIn("activity", metadata)
+        self.assertIn("activity_id", metadata)
+        self.assertIn("mime_type", metadata)
+        self.assertIn("title_set_by_user", metadata)
 
     def test_metadata_creation_with_properties(self):
         """Test creating metadata with properties."""
@@ -153,10 +153,10 @@ class TestDSObject(unittest.TestCase):
         mock_isfile.return_value = True
 
         obj = DSObject("test_id", self.mock_metadata, "/test/path")
-        obj._owns_file = True
+        obj.set_owns_file(True)
         obj.destroy()
 
-        self.assertTrue(obj._destroyed)
+        self.assertTrue(obj.is_destroyed())
         mock_remove.assert_called_once_with("/test/path")
 
 
