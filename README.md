@@ -191,6 +191,11 @@ python3 examples/activity_example.py
 - GTK4
 - PyGObject 3.42+
 - GObject Introspection
+### Linux dependencies
+
+Before installing, make sure GTK4 development libraries are installed:
+
+sudo apt install libgtk-4-dev python3-gi gir1.2-gtk-4.0
 
 ## License
 
